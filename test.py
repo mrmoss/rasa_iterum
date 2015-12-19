@@ -27,6 +27,7 @@ if __name__=="__main__":
 	ser=serial.Serial()
 	parser=parser_t()
 	timer=millis()+2000
+	start_time=0
 	pos=40;
 
 	while True:
@@ -39,22 +40,23 @@ if __name__=="__main__":
 			if ser.isOpen():
 				print("connected")
 				time.sleep(2);
-				packetize.send_packet('{"c":{"s":[10],"o":[47,13],"i":[11]}}',ser)
-				#packetize.send_packet('{"c":{"o":[47,13],"i":[11]}}',ser)
+				#packetize.send_packet('{"c":{"s":[10],"o":[47,13],"i":[11,54]}}',ser)
+				packetize.send_packet('{"c":{"o":[47,13],"i":[11,54]}}',ser)
 
 				while True:
 					if millis()>timer:
 						print("Writing")
 						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
 							'"o":['+str(pos)+','+str(pos/100)+']}}',ser)
+						start_time=millis()
 						pos=pos+10
 						if pos>140:
 							pos=40
-						timer=millis()+300
+						timer=millis()+100
 
 					sensors=parser.parse(ser)
 					if len(sensors)>0:
-						print(sensors)
+						print(sensors+" ("+str(millis()-start_time)+"ms)")
 
 		except KeyboardInterrupt:
 			exit(0)
