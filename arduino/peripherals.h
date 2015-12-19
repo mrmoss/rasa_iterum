@@ -132,7 +132,7 @@ namespace peripherals
     {
         list_t<Servo>::node_t* servo=servos.head();
         uint32_t count=0;
-        sensor_json+="\"o\":[";
+        sensor_json+="\"s\":[";
     
         while(servo!=NULL)
         {
