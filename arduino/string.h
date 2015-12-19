@@ -160,7 +160,7 @@ namespace std
             char* ptr_m;
     };
 
-    int16_t stoi(const std::string& str)
+    inline int16_t stoi(const std::string& str)
     {
         if(str.c_str()==NULL)
             return 0;
@@ -168,7 +168,7 @@ namespace std
         return atoi(str.c_str());
     }
 
-    int32_t stol(const std::string& str)
+    inline int32_t stol(const std::string& str)
     {
         if(str.c_str()==NULL)
             return 0;
@@ -176,12 +176,12 @@ namespace std
         return atol(str.c_str());
     }
     
-    uint32_t stoul(const std::string& str)
+    inline uint32_t stoul(const std::string& str)
     {
        return (uint32_t)stol(str);
     }
 
-    float stof(const std::string& str)
+    inline float stof(const std::string& str)
     {
         if(str.c_str()==NULL)
             return 0;
@@ -189,7 +189,7 @@ namespace std
         return atof(str.c_str());
     }
 
-    std::string to_string(const uint32_t value)
+    inline std::string to_string(const uint32_t value)
     {
         char buffer[100];
         memset(buffer,0,100);
@@ -197,7 +197,7 @@ namespace std
         return std::string(buffer);
     }
 
-    std::string to_string(const int32_t value)
+    inline std::string to_string(const int32_t value)
     {
         char buffer[100];
         memset(buffer,0,100);
@@ -205,7 +205,7 @@ namespace std
         return std::string(buffer);
     }
 
-    std::string to_string(const float value)
+    inline std::string to_string(const float value)
     {
         char buffer[100];
         memset(buffer,0,100);
@@ -214,7 +214,7 @@ namespace std
     }
 }
 
-std::string operator+(const std::string& lhs,const std::string& rhs)
+inline std::string operator+(const std::string& lhs,const std::string& rhs)
 {
     std::string sum(lhs);
     sum.resize(lhs.size()+rhs.size());
@@ -225,7 +225,7 @@ std::string operator+(const std::string& lhs,const std::string& rhs)
     return sum;
 }
 
-std::string& operator+=(std::string& lhs,const std::string& rhs)
+inline std::string& operator+=(std::string& lhs,const std::string& rhs)
 {
     uint32_t size=lhs.size();
     lhs.resize(size+rhs.size());
@@ -236,7 +236,7 @@ std::string& operator+=(std::string& lhs,const std::string& rhs)
     return lhs;
 }
 
-std::string operator+(const std::string& lhs,const char rhs)
+inline std::string operator+(const std::string& lhs,const char rhs)
 {
     std::string temp=lhs;
     uint32_t size=temp.size();
@@ -248,7 +248,7 @@ std::string operator+(const std::string& lhs,const char rhs)
     return temp;
 }
 
-std::string& operator+=(std::string& lhs,const char rhs)
+inline std::string& operator+=(std::string& lhs,const char rhs)
 {
     uint32_t size=lhs.size();
     lhs.resize(size+1);

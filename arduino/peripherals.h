@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "json.h"
 #include "list.h"
+#include "packetize.h"
 #include <Servo.h>
 
 #define MAX_OUTPUTS 70
@@ -19,7 +20,7 @@ namespace peripherals
     list_t<uint8_t> inputs;
     list_t<uint8_t> roombas;
 
-    void configure_servos(json_ro_t& json)
+    inline void configure_servos(json_ro_t& json)
     {
         list_t<Servo>::node_t* servo=servos.head();
         uint32_t count=0;
@@ -53,7 +54,7 @@ namespace peripherals
         }
     }
     
-    void configure_outputs(json_ro_t& json)
+    inline void configure_outputs(json_ro_t& json)
     {
         outputs.clear();
     
@@ -76,7 +77,7 @@ namespace peripherals
         }
     }
 
-    void configure_inputs(json_ro_t& json)
+    inline void configure_inputs(json_ro_t& json)
     {
         inputs.clear();
     
@@ -98,7 +99,7 @@ namespace peripherals
         }
     }
 
-    void configure_roombas(json_ro_t& json)
+    inline void configure_roombas(json_ro_t& json)
     {
         roombas.clear();
 
@@ -119,7 +120,7 @@ namespace peripherals
         }
     }
     
-    void configure(json_ro_t& json)
+    inline void configure(json_ro_t& json)
     {
         configure_servos(json);
         configure_outputs(json);
@@ -127,10 +128,11 @@ namespace peripherals
         configure_roombas(json);
     }
     
-    void update_servos(json_ro_t& json)
+    inline void update_servos(json_ro_t& json,std::string& sensor_json)
     {
         list_t<Servo>::node_t* servo=servos.head();
         uint32_t count=0;
+        sensor_json+="\"o\":[";
     
         while(servo!=NULL)
         {
@@ -148,16 +150,22 @@ namespace peripherals
                 value=180-SERVO_DIR_LIMIT;
 
             servo->data.write(value);
-            ("Setting servo["+std::to_string(count)+"]="+std::to_string(value)).println(Serial);
+            sensor_json+=std::to_string(value);
             ++count;
             servo=servo->next;
+
+            if(servo!=NULL)
+                sensor_json+=",";
+            else
+                sensor_json+="]";
         }
     }
     
-    void update_outputs(json_ro_t& json)
+    inline void update_outputs(json_ro_t& json,std::string& sensor_json)
     {
         list_t<uint8_t>::node_t* output=outputs.head();
         uint32_t count=0;
+        sensor_json+="\"o\":[";
     
         while(output!=NULL)
         {
@@ -175,22 +183,27 @@ namespace peripherals
                     value=1;
 
                 digitalWrite(pin,value);
-                ("Setting digtital output pin "+std::to_string(pin)+"="+std::to_string(value)).println(Serial);
             }
             else
             {
                 analogWrite(pin,value);
-                ("Setting analog output pin "+std::to_string(pin)+"="+std::to_string(value)).println(Serial);
             }
 
+            sensor_json+=std::to_string(value);
             ++count;
             output=output->next;
+
+            if(output!=NULL)
+                sensor_json+=",";
+            else
+                sensor_json+="]";
         }
     }
 
-    void update_inputs(json_ro_t& json)
+    inline void update_inputs(json_ro_t& json,std::string& sensor_json)
     {
         list_t<uint8_t>::node_t* input=inputs.head();
+        sensor_json+="\"i\":[";
     
         while(input!=NULL)
         {
@@ -202,19 +215,30 @@ namespace peripherals
             else
                 value=digitalRead(pin);
 
-            ("Reading input pin "+std::to_string(pin)+"="+std::to_string(value)).println(Serial);
+            sensor_json+=std::to_string(value);
             input=input->next;
+
+            if(input!=NULL)
+                sensor_json+=",";
+            else
+                sensor_json+="]";
         }
     }
 
-    void update(json_ro_t& json)
+    inline void update(json_ro_t& json)
     {
-        update_servos(json);
-        update_outputs(json);
-        update_inputs(json);
+        std::string sensor_json;
+        sensor_json+="{";
+            update_servos(json,sensor_json);
+        sensor_json+=",";
+            update_outputs(json,sensor_json);
+        sensor_json+=",";
+            update_inputs(json,sensor_json);
+        sensor_json+="}";
+        send_packet(sensor_json,Serial);
     }
 
-    void loop(json_ro_t& json)
+    inline void loop(json_ro_t& json)
     {
         if(json["c"].size()>0)
             configure(json);

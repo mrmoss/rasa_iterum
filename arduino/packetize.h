@@ -4,6 +4,17 @@
 #include <Arduino.h>
 #include "string.h"
 
+#define PACKET_HEADER 0x5f
+
+inline void send_packet(const std::string& data,HardwareSerial& serial)
+{
+    uint8_t header=PACKET_HEADER;
+    uint16_t size=data.size();
+    serial.write((uint8_t*)&header,1);
+    serial.write((uint8_t*)&size,2);
+    serial.write((uint8_t*)data.c_str(),size);
+}
+
 class parser_t
 {
     enum state_t
@@ -24,7 +35,7 @@ class parser_t
 
             while(serial.available()>0&&serial.readBytes(&temp,1)==1)
             {
-                if(state_m==HEADER&&temp==0x5f)
+                if(state_m==HEADER&&temp==PACKET_HEADER)
                 {
                     state_m=SIZE_0;
                 }
