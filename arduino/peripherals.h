@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include "json.h"
 #include "list.h"
-#include "pins.h"
 #include <Servo.h>
 
 #define MAX_OUTPUTS 70
@@ -22,7 +21,7 @@ namespace peripherals
 
     void configure_servos(json_ro_t& json)
     {
-        node_t<Servo>* servo=servos.head();
+        list_t<Servo>::node_t* servo=servos.head();
         uint32_t count=0;
     
         while(servo!=NULL)
@@ -130,7 +129,7 @@ namespace peripherals
     
     void update_servos(json_ro_t& json)
     {
-        node_t<Servo>* servo=servos.head();
+        list_t<Servo>::node_t* servo=servos.head();
         uint32_t count=0;
     
         while(servo!=NULL)
@@ -157,7 +156,7 @@ namespace peripherals
     
     void update_outputs(json_ro_t& json)
     {
-        node_t<uint8_t>* output=outputs.head();
+        list_t<uint8_t>::node_t* output=outputs.head();
         uint32_t count=0;
     
         while(output!=NULL)
@@ -191,7 +190,7 @@ namespace peripherals
 
     void update_inputs(json_ro_t& json)
     {
-        node_t<uint8_t>* input=inputs.head();
+        list_t<uint8_t>::node_t* input=inputs.head();
     
         while(input!=NULL)
         {

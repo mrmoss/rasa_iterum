@@ -3,28 +3,28 @@
 
 #include <Arduino.h>
 
-template<typename T> class node_t
-{
-    public:
-        T data;
-        node_t<T>* next;
-
-        node_t():next(NULL)
-        {}
-
-        ~node_t()
-        {
-            delete next;
-        }
-
-    private:
-        node_t(const node_t& copy);
-        node_t& operator=(const node_t& copy);
-};
-
 template<typename T> class list_t
 {
     public:
+        class node_t
+        {
+            public:
+                T data;
+                node_t* next;
+        
+                node_t():next(NULL)
+                {}
+        
+                ~node_t()
+                {
+                    delete next;
+                }
+        
+            private:
+                node_t(const node_t& copy);
+                node_t& operator=(const node_t& copy);
+        };
+
         list_t():size_m(0),head_m(NULL)
         {}
 
@@ -41,20 +41,20 @@ template<typename T> class list_t
 
         void append(const T& element)
         {
-            node_t<T>* node=new node_t<T>();
+            node_t* node=new node_t();
             node->data=element;
             node->next=head_m;
             head_m=node;
         }
 
-        node_t<T>* head()
+        node_t* head()
         {
             return head_m;
         }
 
     private:
         uint32_t size_m;
-        node_t<T>* head_m;
+        node_t* head_m;
 
         list_t(const list_t& copy);
         list_t& operator=(const list_t& copy);
