@@ -4,19 +4,20 @@
 #include <Arduino.h>
 #include "json.h"
 #include "list.h"
+#include "pins.h"
 #include <Servo.h>
 
 #define MAX_OUTPUTS 70
-#define MAX_ANALOGS 16
+#define MAX_INPUTS  70
 #define MAX_ROOMBAS 3
 
-#define SERVO_LIMIT 40
+#define SERVO_DIR_LIMIT 40
 
 namespace peripherals
 {
     list_t<Servo> servos;
     list_t<uint8_t> outputs;
-    list_t<uint8_t> analogs;
+    list_t<uint8_t> inputs;
     list_t<uint8_t> roombas;
 
     void configure_servos(json_ro_t& json)
@@ -76,21 +77,25 @@ namespace peripherals
         }
     }
 
-    void configure_analogs(json_ro_t& json)
+    void configure_inputs(json_ro_t& json)
     {
-        analogs.clear();
+        inputs.clear();
     
-        for(uint32_t ii=0;ii<MAX_ANALOGS;++ii)
+        for(uint32_t ii=0;ii<MAX_INPUTS;++ii)
         {
-            std::string pin_str(json["c.a["+std::to_string(ii)+"]"]);
+            std::string pin_str(json["c.i["+std::to_string(ii)+"]"]);
     
             if(pin_str.size()<=0)
                 break;
     
-            uint32_t pin=A0+std::stoul(pin_str);
-            ("Added analog on pin: A"+std::to_string(pin-A0)).println(Serial);
-            analogs.append((uint8_t)pin);
-            pinMode(pin,INPUT);
+            uint32_t pin=std::stoul(pin_str);
+    
+            if(pin>1)
+            {
+                ("Added input on pin: "+std::to_string(pin)).println(Serial);
+                inputs.append((uint8_t)pin);
+                pinMode(pin,INPUT);
+            }
         }
     }
 
@@ -119,7 +124,7 @@ namespace peripherals
     {
         configure_servos(json);
         configure_outputs(json);
-        configure_analogs(json);
+        configure_inputs(json);
         configure_roombas(json);
     }
     
@@ -137,11 +142,11 @@ namespace peripherals
     
             uint32_t value=std::stoul(value_str);
 
-            if(value<SERVO_LIMIT)
-                value=SERVO_LIMIT;
+            if(value<SERVO_DIR_LIMIT)
+                value=SERVO_DIR_LIMIT;
 
-            if(value>180-SERVO_LIMIT)
-                value=180-SERVO_LIMIT;
+            if(value>180-SERVO_DIR_LIMIT)
+                value=180-SERVO_DIR_LIMIT;
 
             servo->data.write(value);
             ("Setting servo["+std::to_string(count)+"]="+std::to_string(value)).println(Serial);
@@ -164,25 +169,42 @@ namespace peripherals
     
             uint32_t pin=output->data;
             uint32_t value=std::stoul(value_str);
-            analogWrite(pin,value);
-            ("Setting output pin "+std::to_string(pin)+"="+std::to_string(value)).println(Serial);
+
+            if(digitalPinToTimer(pin)==NOT_ON_TIMER)
+            {
+                if(value>0)
+                    value=1;
+
+                digitalWrite(pin,value);
+                ("Setting digtital output pin "+std::to_string(pin)+"="+std::to_string(value)).println(Serial);
+            }
+            else
+            {
+                analogWrite(pin,value);
+                ("Setting analog output pin "+std::to_string(pin)+"="+std::to_string(value)).println(Serial);
+            }
+
             ++count;
             output=output->next;
         }
     }
 
-    void update_analogs(json_ro_t& json)
+    void update_inputs(json_ro_t& json)
     {
-        node_t<uint8_t>* analog=analogs.head();
-        uint32_t count=0;
+        node_t<uint8_t>* input=inputs.head();
     
-        while(analog!=NULL)
+        while(input!=NULL)
         {
-            uint32_t pin=analog->data;
-            uint32_t value=analogRead(pin);
-            ("Reading analog pin "+std::to_string(pin-A0)+"="+std::to_string(value)).println(Serial);
-            ++count;
-            analog=analog->next;
+            uint32_t pin=input->data;
+            uint32_t value=0;
+
+            if(pin>=A0)
+                value=analogRead(pin);
+            else
+                value=digitalRead(pin);
+
+            ("Reading input pin "+std::to_string(pin)+"="+std::to_string(value)).println(Serial);
+            input=input->next;
         }
     }
 
@@ -190,7 +212,7 @@ namespace peripherals
     {
         update_servos(json);
         update_outputs(json);
-        update_analogs(json);
+        update_inputs(json);
     }
 
     void loop(json_ro_t& json)

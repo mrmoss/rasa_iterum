@@ -49,12 +49,14 @@ if __name__=="__main__":
 			if ser.isOpen():
 				print("connected")
 				time.sleep(2);
-				ser.write(packetize('{"c":{"s":[10]}}'))
+				#ser.write(packetize('{"c":{"s":[10],"o":[47,13],"i":[11]}}'))
+				ser.write(packetize('{"c":{"o":[47,13],"i":[11]}}'))
 
 				while True:
 					if millis()>timer:
 						print("Writing")
-						ser.write(packetize('{"u":{"s":['+str(pos)+']}}'))
+						ser.write(packetize('{"u":{"s":['+str(pos)+'],'+
+							'"o":['+str(pos)+','+str(pos/100)+']}}'))
 
 						pos=pos+10
 						if pos>140:
