@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import serial
-import struct
 import time
+import packetize
+from packetize import parser_t
 
 def serial_list():
 	valid_ports=[]
@@ -22,20 +23,9 @@ def serial_list():
 def millis():
 	return int(round(time.time()*1000))
 
-def bytes(data):
-	width=value.bit_length()
-	width+=(8-((width%8) or 8))//4
-	return unhexlify(('%%0%dx'%width)%value)[::-1]
-
-def packetize(data):
-	packet=""
-	packet+=chr(0x5f)
-	packet+=struct.pack('<H',len(data))
-	packet+=data
-	return packet
-
 if __name__=="__main__":
 	ser=serial.Serial()
+	parser=parser_t()
 	timer=millis()+2000
 	pos=40;
 
@@ -49,22 +39,24 @@ if __name__=="__main__":
 			if ser.isOpen():
 				print("connected")
 				time.sleep(2);
-				#ser.write(packetize('{"c":{"s":[10],"o":[47,13],"i":[11]}}'))
-				ser.write(packetize('{"c":{"o":[47,13],"i":[11]}}'))
+				#packetize.send_packet('{"c":{"s":[10],"o":[47,13],"i":[11]}}',ser)
+				packetize.send_packet('{"c":{"o":[47,13],"i":[11]}}',ser)
 
 				while True:
 					if millis()>timer:
 						print("Writing")
-						ser.write(packetize('{"u":{"s":['+str(pos)+'],'+
-							'"o":['+str(pos)+','+str(pos/100)+']}}'))
+						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
+							'"o":['+str(pos)+','+str(pos/100)+']}}',ser)
 
 						pos=pos+10
 						if pos>140:
 							pos=40
 						timer=millis()+100
 
-					if ser.inWaiting()>0:
-						print ser.read(),
+					while ser.inWaiting()>0:
+						sensors=parser.parse(ser.read())
+						if len(sensors)>0:
+							print(sensors)
 
 		except KeyboardInterrupt:
 			exit(0)
