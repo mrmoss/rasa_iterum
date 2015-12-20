@@ -91,7 +91,7 @@ namespace communications
         if(json["u"].size()>0)
         {
             std::string sensor_json;
-            sensor_json+="{m:";
+            sensor_json+="{\"m\":";
             sensor_json+=std::to_string((uint32_t)freeMemory());
             sensor_json+=',';
   
