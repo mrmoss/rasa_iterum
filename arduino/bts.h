@@ -2,78 +2,100 @@
 #define BTS_H
 
 #include <Arduino.h>
+#include "json.h"
+#include "peripheral_list.h"
 
-class bts_t
+struct bts_t
+{
+    uint8_t left_pin;
+    uint8_t right_pin;
+    int16_t speed;
+};
+
+class bts_list_t:public peripheral_list_t<bts_t>
 {
     public:
-        bts_t(const uint8_t left_pin=0,const uint8_t right_pin=0):
-            left_pin_m(left_pin),right_pin_m(right_pin),power_m(0),timeout_m(0)
+        inline uint32_t max_count() const
         {
-            Serial.print("Pins:  ");
-            Serial.print(left_pin_m);
-            Serial.print("  ");
-            Serial.println(right_pin_m);
+            return 35;
         }
 
-        ~bts_t()
+        inline void on_remove(bts_t& bts)
         {
-            if(left_pin_m>1&&right_pin_m>1)
+            pinMode(bts.left_pin,INPUT);
+            pinMode(bts.right_pin,INPUT);
+        }
+
+        inline bool on_add(const std::string& value_str,bts_t& bts)
+        {
+            json_ro_t json(value_str);
+
+            std::string left_pin=json["l"];
+            std::string right_pin=json["r"];
+
+            if(left_pin.size()<=0||right_pin.size()<=0)
+                return false;
+
+            bts.left_pin=std::stoul(left_pin);
+            bts.right_pin=std::stoul(right_pin);
+
+            if(bts.left_pin>1&&bts.right_pin>1)
             {
-                pinMode(left_pin_m,OUTPUT);
-                pinMode(right_pin_m,OUTPUT);
-                digitalWrite(left_pin_m,0);
-                digitalWrite(right_pin_m,0);
-                pinMode(left_pin_m,INPUT);
-                pinMode(right_pin_m,INPUT);
+                pinMode(bts.left_pin,OUTPUT);
+                pinMode(bts.right_pin,OUTPUT);
+                bts.speed=0;
+                digitalWrite(bts.left_pin,bts.speed);
+                digitalWrite(bts.right_pin,bts.speed);
+                return true;
             }
+
+            return false;
         }
 
-        void drive(int32_t power,const bool timeout=true)
+        inline std::string key() const
         {
-            if(left_pin_m>1&&right_pin_m>1)
+            return "b";
+        }
+
+        inline std::string on_get(bts_t& bts)
+        {
+            return std::to_string((int32_t)bts.speed);
+        }
+
+        inline void on_set(bts_t& bts,const std::string& str_speed)
+        {
+            timeout_m=millis()+500;
+
+            if(bts.left_pin>1&&bts.right_pin>1)
             {
-                power_m=power;
+                bts.speed=std::stol(str_speed);
+                digitalWrite(bts.left_pin,0);
+                digitalWrite(bts.right_pin,0);
 
-                if(power_m<-255)
-                    power_m=-255;
+                if(bts.speed<-255)
+                    bts.speed=-255;
 
-                if(power_m>255)
-                    power_m=255;
+                if(bts.speed>255)
+                    bts.speed=255;
 
-                pinMode(left_pin_m,OUTPUT);
-                pinMode(right_pin_m,OUTPUT);
-
-                if(power_m<0)
-                {
-                    analogWrite(left_pin_m,-power_m);
-                    analogWrite(right_pin_m,0);
-                }
+                if(bts.speed<0)
+                    analogWrite(bts.right_pin,-bts.speed);
                 else
-                {
-                    analogWrite(left_pin_m,0);
-                    analogWrite(right_pin_m,power_m);
-                }
-
-                if(timeout)
-                    timeout_m=millis()+500;
+                    analogWrite(bts.left_pin,bts.speed);
             }
         }
 
-        void loop()
+        inline void on_loop(bts_t& bts)
         {
-            if((uint32_t)millis()>=timeout_m)
-                drive(0,false);
-        }
-
-        int32_t power() const
-        {
-            return power_m;
+            if((uint32_t)millis()>=timeout_m&&bts.speed!=0)
+            {
+                bts.speed=0;
+                digitalWrite(bts.left_pin,0);
+                digitalWrite(bts.right_pin,0);
+            }
         }
 
     private:
-        uint8_t left_pin_m;
-        uint8_t right_pin_m;
-        int32_t power_m;
         uint32_t timeout_m;
 };
 

@@ -132,7 +132,7 @@ namespace std
     {
         char buffer[100];
         memset(buffer,0,100);
-        snprintf(buffer,100,"%lu",(uint64_t)value);
+        snprintf(buffer,100,"%lu",value);
         return std::string(buffer);
     }
 
@@ -140,7 +140,7 @@ namespace std
     {
         char buffer[100];
         memset(buffer,0,100);
-        snprintf(buffer,100,"%ld",(int64_t)value);
+        snprintf(buffer,100,"%ld",value);
         return std::string(buffer);
     }
 

@@ -31,6 +31,7 @@ if __name__=="__main__":
 	start_time=0
 	pos=40
 	print(ord(packetize.make_crc("hello")))
+	test=True
 
 	while True:
 		try:
@@ -47,20 +48,24 @@ if __name__=="__main__":
 				time.sleep(2)
 				print("connected")
 				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54]}}',ser)
-				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"s":[10]}}',ser)
-				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ser)
+				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"s":[10]}}',ser)
+				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ser)
 
 				while ser.isOpen():
 					if millis()>timer:
-						#packetize.send_packet('{"u":{"o":['+str(pos)+','+str(pos)+']}}',ser)
-						#packetize.send_packet('{"u":{"s":['+str(pos)+']}}',ser);
-						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
-							'"o":['+str(pos)+','+str(int(pos>90))+','+str(random.randint(0,255))+'],'+
-							'"b":[15]}}',ser)
-						#packetize.send_packet('{"u":{"o":[0,1,255]}}',ser)
-						#packetize.send_packet('{}',ser)
+						if test:
+							#packetize.send_packet('{"u":{"o":['+str(pos)+','+str(pos)+']}}',ser)
+							#packetize.send_packet('{"u":{"s":['+str(pos)+']}}',ser);
+							packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
+								'"o":['+str(pos)+','+str(int(pos>90))+','+str(random.randint(0,255))+'],'+
+								'"b":['+str(pos-70)+']}}',ser)
+							#packetize.send_packet('{"u":{"o":[0,1,255]}}',ser)
+							#packetize.send_packet('{}',ser)
+							test=False
+						else:
+							packetize.send_packet('{"u":{}}',ser)
 						start_time=millis()
-						timer=millis()+10
+						timer=millis()+700
 						pos+=10
 
 						if(pos>140):

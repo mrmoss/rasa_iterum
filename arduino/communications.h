@@ -2,6 +2,7 @@
 #define COMMUNICATIONS_H
 
 #include <Arduino.h>
+#include "bts.h"
 #include "input_pin.h"
 #include "json.h"
 #include "output_pin.h"
@@ -15,6 +16,7 @@ namespace communications
     input_pin_list_t inputs;
     output_pin_list_t outputs;
     servo_list_t servos;
+    bts_list_t btss;
 
     template<typename T> void configure(peripheral_list_t<T>& peripherals,json_ro_t& json)
     {
@@ -71,10 +73,6 @@ namespace communications
 
             sensor_json+="]";
         }
-        else
-        {
-            send_packet("node is null",Serial);
-        }
 
         return changed;
     }
@@ -86,6 +84,7 @@ namespace communications
             configure(inputs,json);
             configure(outputs,json);
             configure(servos,json);
+            configure(btss,json);
         }
 
         if(json["u"].size()>0)
@@ -101,7 +100,10 @@ namespace communications
             if(update(outputs,json,sensor_json))
                 sensor_json+=",";
 
-            update(servos,json,sensor_json);
+            if(update(servos,json,sensor_json))
+                sensor_json+=",";
+
+            update(btss,json,sensor_json);
 
             if(sensor_json.size()>0&&sensor_json[sensor_json.size()-1]==',')
                 sensor_json.erase(sensor_json.size()-1,1);
@@ -128,6 +130,7 @@ namespace communications
         //loop(inputs);
         //loop(outputs);
         //loop(servos);
+        loop(btss);
     }
 }
 
