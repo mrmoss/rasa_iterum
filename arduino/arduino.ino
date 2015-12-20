@@ -16,6 +16,8 @@ void loop()
     if(str.size()>0)
     {
         json_ro_t json(str);
-        peripherals::loop(json);
+        peripherals::receive(json);
     }
+
+    peripherals::loop();
 }

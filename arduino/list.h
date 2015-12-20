@@ -11,15 +11,15 @@ template<typename T> class list_t
             public:
                 T data;
                 node_t* next;
-        
+
                 node_t():next(NULL)
                 {}
-        
+
                 ~node_t()
                 {
                     delete next;
                 }
-        
+
             private:
                 node_t(const node_t& copy);
                 node_t& operator=(const node_t& copy);

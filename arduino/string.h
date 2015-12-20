@@ -42,13 +42,13 @@ namespace std
                 if(this!=&copy)
                 {
                     if(ptr_m!=NULL)
-                
+
                     {
                         free(ptr_m);
                         ptr_m=NULL;
                         size_m=0;
                     }
-    
+
                     string temp(copy.ptr_m,copy.size_m);
                     swap(temp);
                 }
@@ -67,7 +67,7 @@ namespace std
                 char* temp_ptr=str.ptr_m;
                 str.ptr_m=ptr_m;
                 ptr_m=temp_ptr;
-                
+
                 uint32_t temp_size=str.size_m;
                 str.size_m=size_m;
                 size_m=temp_size;
@@ -164,7 +164,7 @@ namespace std
     {
         if(str.c_str()==NULL)
             return 0;
-    
+
         return atoi(str.c_str());
     }
 
@@ -172,10 +172,10 @@ namespace std
     {
         if(str.c_str()==NULL)
             return 0;
-    
+
         return atol(str.c_str());
     }
-    
+
     inline uint32_t stoul(const std::string& str)
     {
        return (uint32_t)stol(str);
@@ -185,7 +185,7 @@ namespace std
     {
         if(str.c_str()==NULL)
             return 0;
-    
+
         return atof(str.c_str());
     }
 
@@ -201,7 +201,7 @@ namespace std
     {
         char buffer[100];
         memset(buffer,0,100);
-        snprintf(buffer,100,"%l",value);
+        snprintf(buffer,100,"%ld",value);
         return std::string(buffer);
     }
 

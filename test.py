@@ -34,20 +34,22 @@ if __name__=="__main__":
 		try:
 			print("connecting...")
 			ser.baudrate=115200
-			ser.port="/dev/ttyACM0"
+			ser.port="/dev/ttyACM1"
 			ser.open()
 
 			if ser.isOpen():
 				print("connected")
 				time.sleep(2);
-				packetize.send_packet('{"c":{"s":[10],"o":[47,48,13],"i":[11,54]}}',ser)
 				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54]}}',ser)
+				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"s":[10]}}',ser)
+				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ser)
 
 				while True:
 					if millis()>timer:
 						print("Writing")
 						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
-							'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+']}}',ser)
+							'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+'],'+
+							'"b":[15]}}',ser)
 						start_time=millis()
 						pos=pos+10
 						if pos>140:
