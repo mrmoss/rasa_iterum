@@ -7,96 +7,96 @@
 
 struct bts_t
 {
-    uint8_t left_pin;
-    uint8_t right_pin;
-    int16_t speed;
+	uint8_t left_pin;
+	uint8_t right_pin;
+	int16_t speed;
 };
 
 class bts_list_t:public peripheral_list_t<bts_t>
 {
-    public:
-        inline uint32_t max_count() const
-        {
-            return 35;
-        }
+	public:
+		inline uint32_t max_count() const
+		{
+			return 35;
+		}
 
-        inline void on_remove(bts_t& bts)
-        {
-            pinMode(bts.left_pin,INPUT);
-            pinMode(bts.right_pin,INPUT);
-        }
+		inline void on_remove(bts_t& bts)
+		{
+			pinMode(bts.left_pin,INPUT);
+			pinMode(bts.right_pin,INPUT);
+		}
 
-        inline bool on_add(const std::string& value_str,bts_t& bts)
-        {
-            json_ro_t json(value_str);
+		inline bool on_add(const std::string& value_str,bts_t& bts)
+		{
+			json_ro_t json(value_str);
 
-            std::string left_pin=json["l"];
-            std::string right_pin=json["r"];
+			std::string left_pin=json["l"];
+			std::string right_pin=json["r"];
 
-            if(left_pin.size()<=0||right_pin.size()<=0)
-                return false;
+			if(left_pin.size()<=0||right_pin.size()<=0)
+				return false;
 
-            bts.left_pin=std::stoul(left_pin);
-            bts.right_pin=std::stoul(right_pin);
+			bts.left_pin=std::stoul(left_pin);
+			bts.right_pin=std::stoul(right_pin);
 
-            if(bts.left_pin>1&&bts.right_pin>1)
-            {
-                pinMode(bts.left_pin,OUTPUT);
-                pinMode(bts.right_pin,OUTPUT);
-                bts.speed=0;
-                digitalWrite(bts.left_pin,bts.speed);
-                digitalWrite(bts.right_pin,bts.speed);
-                return true;
-            }
+			if(bts.left_pin>1&&bts.right_pin>1)
+			{
+				pinMode(bts.left_pin,OUTPUT);
+				pinMode(bts.right_pin,OUTPUT);
+				bts.speed=0;
+				digitalWrite(bts.left_pin,bts.speed);
+				digitalWrite(bts.right_pin,bts.speed);
+				return true;
+			}
 
-            return false;
-        }
+			return false;
+		}
 
-        inline std::string key() const
-        {
-            return "b";
-        }
+		inline std::string key() const
+		{
+			return "b";
+		}
 
-        inline std::string on_get(bts_t& bts)
-        {
-            return std::to_string((int32_t)bts.speed);
-        }
+		inline std::string on_get(bts_t& bts)
+		{
+			return std::to_string((int32_t)bts.speed);
+		}
 
-        inline void on_set(bts_t& bts,const std::string& str_speed)
-        {
-            timeout_m=millis()+500;
+		inline void on_set(bts_t& bts,const std::string& str_speed)
+		{
+			timeout_m=millis()+500;
 
-            if(bts.left_pin>1&&bts.right_pin>1)
-            {
-                bts.speed=std::stol(str_speed);
-                digitalWrite(bts.left_pin,0);
-                digitalWrite(bts.right_pin,0);
+			if(bts.left_pin>1&&bts.right_pin>1)
+			{
+				bts.speed=std::stol(str_speed);
+				digitalWrite(bts.left_pin,0);
+				digitalWrite(bts.right_pin,0);
 
-                if(bts.speed<-255)
-                    bts.speed=-255;
+				if(bts.speed<-255)
+					bts.speed=-255;
 
-                if(bts.speed>255)
-                    bts.speed=255;
+				if(bts.speed>255)
+					bts.speed=255;
 
-                if(bts.speed<0)
-                    analogWrite(bts.right_pin,-bts.speed);
-                else
-                    analogWrite(bts.left_pin,bts.speed);
-            }
-        }
+				if(bts.speed<0)
+					analogWrite(bts.right_pin,-bts.speed);
+				else
+					analogWrite(bts.left_pin,bts.speed);
+			}
+		}
 
-        inline void on_loop(bts_t& bts)
-        {
-            if((uint32_t)millis()>=timeout_m&&bts.speed!=0)
-            {
-                bts.speed=0;
-                digitalWrite(bts.left_pin,0);
-                digitalWrite(bts.right_pin,0);
-            }
-        }
+		inline void on_loop(bts_t& bts)
+		{
+			if((uint32_t)millis()>=timeout_m&&bts.speed!=0)
+			{
+				bts.speed=0;
+				digitalWrite(bts.left_pin,0);
+				digitalWrite(bts.right_pin,0);
+			}
+		}
 
-    private:
-        uint32_t timeout_m;
+	private:
+		uint32_t timeout_m;
 };
 
 #endif

@@ -7,18 +7,18 @@ parser_t parser;
 
 void setup()
 {
-    Serial.begin(57600);
+	Serial.begin(57600);
 }
 
 void loop()
 {
-    std::string str(parser.parse(Serial));
+	std::string str(parser.parse(Serial));
 
-    if(str.size()>0)
-    {
-        json_ro_t json(str);
-        communications::receive(json);
-    }
+	if(str.size()>0)
+	{
+		json_ro_t json(str);
+		communications::receive(json);
+	}
 
-    communications::loop();
+	communications::loop();
 }
