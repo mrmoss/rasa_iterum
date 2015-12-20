@@ -4,6 +4,7 @@ import serial
 import time
 import packetize
 from packetize import parser_t
+import random
 
 def serial_list():
 	valid_ports=[]
@@ -35,7 +36,7 @@ if __name__=="__main__":
 		try:
 			print("connecting...")
 			ser.baudrate=57600
-			ser.port="/dev/ttyACM0"
+			ser.port="/dev/ttyACM1"
 			ser.open()
 
 			if ser.isOpen():
@@ -49,17 +50,17 @@ if __name__=="__main__":
 				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"s":[10]}}',ser)
 				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ser)
 
-				while True:
+				while ser.isOpen():
 					if millis()>timer:
-						print("Writing")
 						#packetize.send_packet('{"u":{"o":['+str(pos)+','+str(pos)+']}}',ser)
 						#packetize.send_packet('{"u":{"s":['+str(pos)+']}}',ser);
-						#packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
-						#	'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+'],'+
-						#	'"b":[15]}}',ser)
-						packetize.send_packet('{"u":{"o":[0,1,255]}}',ser)
+						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
+							'"o":['+str(pos)+','+str(int(pos>90))+','+str(random.randint(0,255))+'],'+
+							'"b":[15]}}',ser)
+						#packetize.send_packet('{"u":{"o":[0,1,255]}}',ser)
+						#packetize.send_packet('{}',ser)
 						start_time=millis()
-						timer=millis()+100
+						timer=millis()+10
 						pos+=10
 
 						if(pos>140):

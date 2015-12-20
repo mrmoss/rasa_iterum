@@ -48,7 +48,7 @@ class output_pin_list_t:public peripheral_list_t<output_pin_t>
             return std::to_string((uint32_t)output.value);
         }
 
-       inline  void on_set(output_pin_t& output,const std::string& str_value)
+        inline void on_set(output_pin_t& output,const std::string& str_value)
         {
             uint32_t value=std::stoul(str_value);
             output.value=value;

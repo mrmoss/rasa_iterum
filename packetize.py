@@ -21,6 +21,7 @@ def send_packet(data,serial):
 	packet+=chr(0x5f)
 	packet+=struct.pack('<H',len(data))
 	packet+=data
+	packet+=make_crc(data)
 	serial.write(packet)
 	serial.flushOutput()
 
@@ -49,13 +50,16 @@ class parser_t:
 				self.buffer_m+=temp
 
 				if len(self.buffer_m)>=self.size_m:
-			#		self.state_m=state_t.CRC
+					self.state_m=state_t.CRC
 
-			#elif self.state_m==state_t.CRC:
-				#if temp==make_crc(self.buffer_m):
+			elif self.state_m==state_t.CRC:
+				ret=""
+
+				if temp==make_crc(self.buffer_m):
 					ret=self.buffer_m
-					self.reset()
-					return ret
+
+				self.reset()
+				return ret
 
 		return ""
 

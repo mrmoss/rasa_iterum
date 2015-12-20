@@ -38,7 +38,7 @@ class json_ro_t
             tokens_m=NULL;
         }
 
-        std::string operator[](const std::string& key)
+        inline std::string operator[](const std::string& key)
         {
             if(key.c_str()==NULL||tokens_m==NULL)
                 return "";

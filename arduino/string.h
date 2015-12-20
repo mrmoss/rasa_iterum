@@ -2,162 +2,101 @@
 #define STRING_H
 
 #include <Arduino.h>
+/*#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>*/
 
 namespace std
 {
     class string
     {
         public:
-            string(const char* str=NULL):size_m(0),ptr_m(NULL)
-            {
-                while(str!=NULL&&str[size_m]!='\0')
-                    ++size_m;
+            string(const char* str=NULL):str_m(str)
+            {}
 
-                *this=string(str,size_m);
+            string(const String& str):str_m(str)
+            {}
+
+            string(const char* str,const uint32_t size):str_m(str)
+            {
+                reserve(size);
             }
 
-            string(const char* str,const uint32_t size):size_m(size),ptr_m(NULL)
+            inline uint32_t size() const
             {
-                ptr_m=(char*)malloc(size_m+1);
-                ptr_m[size_m]=0;
-
-                if(ptr_m==NULL)
-                {
-                    size_m=0;
-                }
-                else
-                {
-                    for(uint32_t ii=0;ii<size_m;++ii)
-                        ptr_m[ii]=str[ii];
-                }
+                return str_m.length();
             }
 
-            string(const string& copy):size_m(0),ptr_m(NULL)
+            inline void clear()
             {
-               *this=string(copy.ptr_m,copy.size_m);
+                *this="";
             }
 
-            string& operator=(const string& copy)
+            inline void erase(const uint32_t start,const uint32_t size)
             {
-                if(this!=&copy)
-                {
-                    if(ptr_m!=NULL)
-
-                    {
-                        free(ptr_m);
-                        ptr_m=NULL;
-                        size_m=0;
-                    }
-
-                    string temp(copy.ptr_m,copy.size_m);
-                    swap(temp);
-                }
-
-                return *this;
+                str_m.remove(start,size);
             }
 
-            ~string()
+            inline void reserve(const uint32_t size)
             {
-                if(ptr_m!=NULL)
-                    free(ptr_m);
+                str_m.reserve(size);
             }
 
-            void swap(std::string& str)
+            inline const char* c_str() const
             {
-                char* temp_ptr=str.ptr_m;
-                str.ptr_m=ptr_m;
-                ptr_m=temp_ptr;
-
-                uint32_t temp_size=str.size_m;
-                str.size_m=size_m;
-                size_m=temp_size;
+                return str_m.c_str();
             }
 
-            uint32_t size() const
+            inline std::string substr(const uint32_t start,const uint32_t size)
             {
-                return size_m;
+                return std::string(str_m.substring(start,size));
             }
 
-            void clear()
+            inline char& operator[](uint32_t ii)
             {
-                *this=string("",0);
+                return str_m[ii];
             }
 
-            bool empty() const
+            inline char operator[](const uint32_t ii) const
             {
-                return (size_m>0);
+                 return str_m[ii];
             }
 
-            void resize(const uint32_t size)
+            inline void print(HardwareSerial& serial) const
             {
-                if(size!=size_m)
-                {
-                    ptr_m=(char*)realloc(ptr_m,size+1);
-
-                    if(ptr_m==NULL)
-                    {
-                        size_m=0;
-                    }
-                    else
-                    {
-                        if(size>=size_m)
-                        {
-                            for(uint32_t ii=size_m;ii<=size;++ii)
-                                ptr_m[ii]='\0';
-
-                            size_m=size;
-                        }
-                        else
-                        {
-                            size_m=size;
-                            ptr_m[size_m]='\0';
-                        }
-                    }
-                }
+                serial.print(str_m);
             }
 
-            char* c_str() const
+            inline void println(HardwareSerial& serial) const
             {
-                return ptr_m;
+                serial.println(str_m);
             }
 
-            std::string substr(const uint32_t start,const uint32_t size)
+            friend inline std::string operator+(const std::string& lhs,const std::string& rhs)
             {
-                if(start>=size_m)
-                    return "";
-
-                size_t clamped_size=size_m-start;
-
-                if(size<clamped_size)
-                    clamped_size=size;
-
-                return std::string(ptr_m+start,clamped_size);
+                return lhs.str_m+rhs.str_m;
             }
-
-            char& operator[](uint32_t ii)
+            
+            friend inline std::string& operator+=(std::string& lhs,const std::string& rhs)
             {
-                return ptr_m[ii];
+                lhs.str_m+=rhs.str_m;
+                return lhs;
             }
-
-            char& operator[](const uint32_t ii) const
+            
+            friend inline std::string operator+(const std::string& lhs,const char rhs)
             {
-                return ptr_m[ii];
+                return lhs.str_m+rhs;
             }
-
-            void print(HardwareSerial& serial) const
+            
+            friend inline std::string& operator+=(std::string& lhs,const char rhs)
             {
-                serial.print(ptr_m);
-            }
-
-            void println(HardwareSerial& serial) const
-            {
-                print(serial);
-                serial.println("");
+                lhs.str_m+=rhs;
+                return lhs;
             }
 
         private:
-            uint32_t size_m;
-            char* ptr_m;
+            String str_m;
     };
 
     inline int16_t stoi(const std::string& str)
@@ -193,7 +132,7 @@ namespace std
     {
         char buffer[100];
         memset(buffer,0,100);
-        snprintf(buffer,100,"%lu",value);
+        snprintf(buffer,100,"%lu",(uint64_t)value);
         return std::string(buffer);
     }
 
@@ -201,7 +140,7 @@ namespace std
     {
         char buffer[100];
         memset(buffer,0,100);
-        snprintf(buffer,100,"%ld",value);
+        snprintf(buffer,100,"%ld",(int64_t)value);
         return std::string(buffer);
     }
 
@@ -212,51 +151,6 @@ namespace std
         snprintf(buffer,100,"%f",value);
         return std::string(buffer);
     }
-}
-
-inline std::string operator+(const std::string& lhs,const std::string& rhs)
-{
-    std::string sum(lhs);
-    sum.resize(lhs.size()+rhs.size());
-
-    for(uint32_t ii=0;ii<rhs.size();++ii)
-        sum[lhs.size()+ii]=rhs[ii];
-
-    return sum;
-}
-
-inline std::string& operator+=(std::string& lhs,const std::string& rhs)
-{
-    uint32_t size=lhs.size();
-    lhs.resize(size+rhs.size());
-
-    for(uint32_t ii=0;ii<rhs.size();++ii)
-        lhs[size+ii]=rhs[ii];
-
-    return lhs;
-}
-
-inline std::string operator+(const std::string& lhs,const char rhs)
-{
-    std::string temp=lhs;
-    uint32_t size=temp.size();
-    temp.resize(size+1);
-
-    if(temp.c_str()!=NULL)
-        temp[size]=rhs;
-
-    return temp;
-}
-
-inline std::string& operator+=(std::string& lhs,const char rhs)
-{
-    uint32_t size=lhs.size();
-    lhs.resize(size+1);
-
-    if(lhs.c_str()!=NULL)
-        lhs[size]=rhs;
-
-    return lhs;
 }
 
 #endif

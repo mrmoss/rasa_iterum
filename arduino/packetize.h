@@ -23,8 +23,8 @@ inline void send_packet(const std::string& data,HardwareSerial& serial)
     serial.write(&header,1);
     serial.write((uint8_t*)&size,2);
     serial.write((uint8_t*)data.c_str(),size);
-    //uint8_t crc=make_crc(data);
-    //serial.write(&crc,1);
+    uint8_t crc=make_crc(data);
+    serial.write(&crc,1);
 }
 
 class parser_t
@@ -39,15 +39,18 @@ class parser_t
     };
 
     public:
-        parser_t():buffer_m(""),size_m(0),ptr_m(0),state_m(HEADER)
+        parser_t():buffer_m(""),size_m(0),state_m(HEADER)
         {}
 
-        std::string parse(HardwareSerial& serial)
+        inline std::string parse(HardwareSerial& serial)
         {
+            uint32_t count=0;
             uint8_t temp;
 
-            while(serial.available()>0&&serial.readBytes(&temp,1)==1)
+            while(count<1000&&serial.available()>0&&serial.readBytes(&temp,1)==1)
             {
+                ++count;
+
                 if(state_m==HEADER&&temp==PACKET_HEADER)
                 {
                     state_m=SIZE_0;
@@ -61,43 +64,42 @@ class parser_t
                 {
                     ((uint8_t*)&size_m)[1]=temp;
                     state_m=DATA;
-                    buffer_m.resize(size_m);
+                    buffer_m.reserve(size_m);
                 }
                 else if(state_m==DATA)
                 {
-                    buffer_m[ptr_m]=temp;
-                    ++ptr_m;
+                    buffer_m+=temp;
 
-                    if(ptr_m>=size_m)
-               /*         state_m=CRC;
+                    if(buffer_m.size()>=size_m)
+                        state_m=CRC;
                 }
                 else if(state_m==CRC)
                 {
-                    if(temp==make_crc(buffer_m))*/
-                    {
-                        std::string ret;
-                        ret.swap(buffer_m);
-                        reset();
-                        return ret;
-                    }
+                    std::string ret;
+
+                    uint8_t crc=make_crc(buffer_m);
+
+                    if(temp==crc)
+                        ret=buffer_m;
+
+                    reset();
+                    return ret;
                 }
             }
 
             return "";
         }
 
-        void reset()
+        inline void reset()
         {
             buffer_m.clear();
             size_m=0;
-            ptr_m=0;
             state_m=HEADER;
         }
 
     private:
         std::string buffer_m;
         uint16_t size_m;
-        uint16_t ptr_m;
         state_t state_m;
 };
 

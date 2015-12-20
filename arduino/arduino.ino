@@ -1,6 +1,7 @@
 #include <Servo.h>//WHY I NEED YOU?!
 #include "communications.h"
 #include "packetize.h"
+#include "string.h"
 
 parser_t parser;
 
@@ -16,7 +17,6 @@ void loop()
     if(str.size()>0)
     {
         json_ro_t json(str);
-        Serial.println(str.c_str());
         communications::receive(json);
     }
 

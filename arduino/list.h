@@ -35,13 +35,13 @@ template<typename T> class list_t
             clear();
         }
 
-        void clear()
+        inline void clear()
         {
             if(head_m!=NULL)
                 delete head_m;
         }
 
-        void append(const T& element)
+        inline void append(const T& element)
         {
             list_node_t<T>* node=new list_node_t<T>();
             node->data=element;
@@ -56,23 +56,23 @@ template<typename T> class list_t
             tail_m=node;
         }
 
-        list_node_t<T>* head()
+        inline list_node_t<T>* head()
         {
             return head_m;
         }
 
-        list_node_t<T>* tail()
+        inline list_node_t<T>* tail()
         {
             return tail_m;
         }
 
     private:
+        list_t(const list_t& copy);
+        list_t& operator=(const list_t& copy);
+
         uint32_t size_m;
         list_node_t<T>* head_m;
         list_node_t<T>* tail_m;
-
-        list_t(const list_t& copy);
-        list_t& operator=(const list_t& copy);
 };
 
 #endif

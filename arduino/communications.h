@@ -8,6 +8,8 @@
 #include "packetize.h"
 #include "servo.h"
 
+#include "MemoryFree.h"
+
 namespace communications
 {
     input_pin_list_t inputs;
@@ -69,6 +71,10 @@ namespace communications
 
             sensor_json+="]";
         }
+        else
+        {
+            send_packet("node is null",Serial);
+        }
 
         return changed;
     }
@@ -85,7 +91,9 @@ namespace communications
         if(json["u"].size()>0)
         {
             std::string sensor_json;
-            sensor_json+="{";
+            sensor_json+="{m:";
+            sensor_json+=std::to_string((uint32_t)freeMemory());
+            sensor_json+=',';
   
             if(update(inputs,json,sensor_json))
                 sensor_json+=",";
@@ -95,10 +103,11 @@ namespace communications
 
             update(servos,json,sensor_json);
 
-            if(sensor_json[sensor_json.size()-1]==',')
-                sensor_json.resize(sensor_json.size()-1);
+            if(sensor_json.size()>0&&sensor_json[sensor_json.size()-1]==',')
+                sensor_json.erase(sensor_json.size()-1,1);
 
             sensor_json+="}";
+
             send_packet(sensor_json,Serial);
         }
     }
@@ -118,6 +127,7 @@ namespace communications
     {
         //loop(inputs);
         //loop(outputs);
+        //loop(servos);
     }
 }
 
