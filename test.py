@@ -54,9 +54,10 @@ if __name__=="__main__":
 						print("Writing")
 						#packetize.send_packet('{"u":{"o":['+str(pos)+','+str(pos)+']}}',ser)
 						#packetize.send_packet('{"u":{"s":['+str(pos)+']}}',ser);
-						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
-							'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+'],'+
-							'"b":[15]}}',ser)
+						#packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
+						#	'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+'],'+
+						#	'"b":[15]}}',ser)
+						packetize.send_packet('{"u":{"o":[0,1,255]}}',ser)
 						start_time=millis()
 						timer=millis()+100
 						pos+=10

@@ -8,13 +8,15 @@ template<typename T> class list_node_t
     public:
         T data;
         list_node_t* next;
+        list_node_t* prev;
 
-        list_node_t():next(NULL)
+        list_node_t():next(NULL),prev(NULL)
         {}
 
         ~list_node_t()
         {
-            delete next;
+            if(next!=NULL)
+                delete next;
         }
 
     private:
@@ -25,7 +27,7 @@ template<typename T> class list_node_t
 template<typename T> class list_t
 {
     public:
-        list_t():size_m(0),head_m(NULL)
+        list_t():size_m(0),head_m(NULL),tail_m(NULL)
         {}
 
         ~list_t()
@@ -43,8 +45,15 @@ template<typename T> class list_t
         {
             list_node_t<T>* node=new list_node_t<T>();
             node->data=element;
-            node->next=head_m;
-            head_m=node;
+            node->prev=tail_m;
+
+            if(tail_m!=NULL)
+                tail_m->next=node;
+ 
+            if(head_m==NULL)
+                head_m=node;
+
+            tail_m=node;
         }
 
         list_node_t<T>* head()
@@ -52,9 +61,15 @@ template<typename T> class list_t
             return head_m;
         }
 
+        list_node_t<T>* tail()
+        {
+            return tail_m;
+        }
+
     private:
         uint32_t size_m;
         list_node_t<T>* head_m;
+        list_node_t<T>* tail_m;
 
         list_t(const list_t& copy);
         list_t& operator=(const list_t& copy);
