@@ -7,8 +7,7 @@
 #include "packetize.h"
 #include <Servo.h>
 
-#define MAX_OUTPUTS 70
-#define MAX_INPUTS  70
+#define MAX_PINS 70
 #define MAX_ROOMBAS 3
 
 #define SERVO_DIR_LIMIT 40
@@ -34,7 +33,7 @@ namespace peripherals
 
         servos.clear();
     
-        for(uint32_t ii=0;ii<MAX_OUTPUTS;++ii)
+        for(uint32_t ii=0;ii<MAX_PINS;++ii)
         {
             std::string pin_str(json["c.s["+std::to_string(ii)+"]"]);
     
@@ -58,7 +57,7 @@ namespace peripherals
     {
         outputs.clear();
     
-        for(uint32_t ii=0;ii<MAX_OUTPUTS;++ii)
+        for(uint32_t ii=0;ii<MAX_PINS;++ii)
         {
             std::string pin_str(json["c.o["+std::to_string(ii)+"]"]);
     
@@ -81,7 +80,7 @@ namespace peripherals
     {
         inputs.clear();
     
-        for(uint32_t ii=0;ii<MAX_INPUTS;++ii)
+        for(uint32_t ii=0;ii<MAX_PINS;++ii)
         {
             std::string pin_str(json["c.i["+std::to_string(ii)+"]"]);
     

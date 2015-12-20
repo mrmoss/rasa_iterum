@@ -40,14 +40,14 @@ if __name__=="__main__":
 			if ser.isOpen():
 				print("connected")
 				time.sleep(2);
-				#packetize.send_packet('{"c":{"s":[10],"o":[47,13],"i":[11,54]}}',ser)
-				packetize.send_packet('{"c":{"o":[47,13],"i":[11,54]}}',ser)
+				packetize.send_packet('{"c":{"s":[10],"o":[47,48,13],"i":[11,54]}}',ser)
+				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54]}}',ser)
 
 				while True:
 					if millis()>timer:
 						print("Writing")
 						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
-							'"o":['+str(pos)+','+str(pos/100)+']}}',ser)
+							'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+']}}',ser)
 						start_time=millis()
 						pos=pos+10
 						if pos>140:
