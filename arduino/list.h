@@ -30,7 +30,6 @@ template<typename T> class list_t
 
         ~list_t()
         {
-            Serial.println("BYE!");
             clear();
         }
 

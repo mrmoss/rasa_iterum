@@ -22,6 +22,7 @@ def send_packet(data,serial):
 	packet+=struct.pack('<H',len(data))
 	packet+=data
 	serial.write(packet)
+	serial.flushOutput()
 
 class parser_t:
 	PACKET_HEADER=chr(0x5f)

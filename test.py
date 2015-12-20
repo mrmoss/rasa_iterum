@@ -45,20 +45,20 @@ if __name__=="__main__":
 				ser.setDTR(True)
 				time.sleep(2)
 				print("connected")
-				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54]}}',ser)
-				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"s":[10]}}',ser)
+				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54]}}',ser)
+				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"s":[10]}}',ser)
 				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ser)
 
 				while True:
 					if millis()>timer:
 						print("Writing")
-						packetize.send_packet('{"u":{"o":['+str(pos)+','+str(pos)+']}}',ser)
+						#packetize.send_packet('{"u":{"o":['+str(pos)+','+str(pos)+']}}',ser)
 						#packetize.send_packet('{"u":{"s":['+str(pos)+']}}',ser);
-						#packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
-						#	'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+'],'+
-						#	'"b":[15]}}',ser)
+						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
+							'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+'],'+
+							'"b":[15]}}',ser)
 						start_time=millis()
-						timer=millis()+10
+						timer=millis()+100
 						pos+=10
 
 						if(pos>140):

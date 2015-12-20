@@ -82,11 +82,11 @@ namespace communications
             configure(servos,json);
         }
 
-        std::string sensor_json;
-        sensor_json+="{";
-
         if(json["u"].size()>0)
         {
+            std::string sensor_json;
+            sensor_json+="{";
+  
             if(update(inputs,json,sensor_json))
                 sensor_json+=",";
 
