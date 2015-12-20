@@ -6,13 +6,25 @@
 
 #define PACKET_HEADER 0x5f
 
+inline uint8_t make_crc(const std::string& data)
+{
+    uint8_t crc=0x00;
+
+    for(uint32_t ii=0;ii<data.size();++ii)
+        crc^=data[ii];
+
+    return crc;
+}
+
 inline void send_packet(const std::string& data,HardwareSerial& serial)
 {
     uint8_t header=PACKET_HEADER;
     uint16_t size=data.size();
-    serial.write((uint8_t*)&header,1);
+    serial.write(&header,1);
     serial.write((uint8_t*)&size,2);
     serial.write((uint8_t*)data.c_str(),size);
+    //uint8_t crc=make_crc(data);
+    //serial.write(&crc,1);
 }
 
 class parser_t
@@ -22,7 +34,8 @@ class parser_t
         HEADER,
         SIZE_0,
         SIZE_1,
-        DATA
+        DATA,
+        CRC
     };
 
     public:
@@ -56,6 +69,11 @@ class parser_t
                     ++ptr_m;
 
                     if(ptr_m>=size_m)
+               /*         state_m=CRC;
+                }
+                else if(state_m==CRC)
+                {
+                    if(temp==make_crc(buffer_m))*/
                     {
                         std::string ret;
                         ret.swap(buffer_m);

@@ -28,39 +28,51 @@ if __name__=="__main__":
 	parser=parser_t()
 	timer=millis()+2000
 	start_time=0
-	pos=40;
+	pos=40
+	print(ord(packetize.make_crc("hello")))
 
 	while True:
 		try:
 			print("connecting...")
-			ser.baudrate=115200
-			ser.port="/dev/ttyACM1"
+			ser.baudrate=57600
+			ser.port="/dev/ttyACM0"
 			ser.open()
 
 			if ser.isOpen():
+				ser.setDTR(False)
+				time.sleep(2)
+				ser.flushInput()
+				ser.setDTR(True)
+				time.sleep(2)
 				print("connected")
-				time.sleep(2);
-				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54]}}',ser)
+				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54]}}',ser)
 				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"s":[10]}}',ser)
-				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ser)
+				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ser)
 
 				while True:
 					if millis()>timer:
 						print("Writing")
-						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
-							'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+'],'+
-							'"b":[15]}}',ser)
+						packetize.send_packet('{"u":{"o":['+str(pos)+','+str(pos)+']}}',ser)
+						#packetize.send_packet('{"u":{"s":['+str(pos)+']}}',ser);
+						#packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
+						#	'"o":['+str(pos)+','+str(int(pos>90))+','+str(int(pos>90))+'],'+
+						#	'"b":[15]}}',ser)
 						start_time=millis()
-						pos=pos+10
-						if pos>140:
-							pos=40
-						timer=millis()+100
+						timer=millis()+10
+						pos+=10
+
+						if(pos>140):
+							pos=0
+
+					#while ser.inWaiting()>0:
+					#	print ser.read(),
 
 					sensors=parser.parse(ser)
 					if len(sensors)>0:
 						print(sensors+" ("+str(millis()-start_time)+"ms)")
 
 		except KeyboardInterrupt:
+			ser.close()
 			exit(0)
 
 		except Exception as error:

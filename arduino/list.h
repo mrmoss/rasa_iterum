@@ -3,33 +3,34 @@
 
 #include <Arduino.h>
 
+template<typename T> class list_node_t
+{
+    public:
+        T data;
+        list_node_t* next;
+
+        list_node_t():next(NULL)
+        {}
+
+        ~list_node_t()
+        {
+            delete next;
+        }
+
+    private:
+        list_node_t(const list_node_t& copy);
+        list_node_t& operator=(const list_node_t& copy);
+};
+
 template<typename T> class list_t
 {
     public:
-        class node_t
-        {
-            public:
-                T data;
-                node_t* next;
-
-                node_t():next(NULL)
-                {}
-
-                ~node_t()
-                {
-                    delete next;
-                }
-
-            private:
-                node_t(const node_t& copy);
-                node_t& operator=(const node_t& copy);
-        };
-
         list_t():size_m(0),head_m(NULL)
         {}
 
         ~list_t()
         {
+            Serial.println("BYE!");
             clear();
         }
 
@@ -41,20 +42,20 @@ template<typename T> class list_t
 
         void append(const T& element)
         {
-            node_t* node=new node_t();
+            list_node_t<T>* node=new list_node_t<T>();
             node->data=element;
             node->next=head_m;
             head_m=node;
         }
 
-        node_t* head()
+        list_node_t<T>* head()
         {
             return head_m;
         }
 
     private:
         uint32_t size_m;
-        node_t* head_m;
+        list_node_t<T>* head_m;
 
         list_t(const list_t& copy);
         list_t& operator=(const list_t& copy);

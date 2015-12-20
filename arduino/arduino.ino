@@ -1,12 +1,12 @@
 #include <Servo.h>//WHY I NEED YOU?!
-#include "peripherals.h"
+#include "communications.h"
 #include "packetize.h"
 
 parser_t parser;
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(57600);
 }
 
 void loop()
@@ -16,8 +16,9 @@ void loop()
     if(str.size()>0)
     {
         json_ro_t json(str);
-        peripherals::receive(json);
+        Serial.println(str.c_str());
+        communications::receive(json);
     }
 
-    peripherals::loop();
+    communications::loop();
 }

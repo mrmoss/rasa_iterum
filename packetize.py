@@ -1,18 +1,27 @@
 from enum import Enum
 import struct
 
+class state_t(Enum):
+	HEADER=0
+	SIZE_0=1
+	SIZE_1=2
+	DATA=3
+	CRC=4
+
+def make_crc(data):
+	crc=0
+
+	for ii in data:
+		crc^=ord(ii)
+
+	return chr(crc)
+
 def send_packet(data,serial):
 	packet=""
 	packet+=chr(0x5f)
 	packet+=struct.pack('<H',len(data))
 	packet+=data
 	serial.write(packet)
-
-class state_t(Enum):
-	HEADER=0
-	SIZE_0=1
-	SIZE_1=2
-	DATA=3
 
 class parser_t:
 	PACKET_HEADER=chr(0x5f)
@@ -39,6 +48,10 @@ class parser_t:
 				self.buffer_m+=temp
 
 				if len(self.buffer_m)>=self.size_m:
+			#		self.state_m=state_t.CRC
+
+			#elif self.state_m==state_t.CRC:
+				#if temp==make_crc(self.buffer_m):
 					ret=self.buffer_m
 					self.reset()
 					return ret
