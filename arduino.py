@@ -1,6 +1,9 @@
 import serial
 import time
 
+def millis():
+	return int(round(time.time()*1000))
+
 class arduino_t:
 	def __init__(self):
 		self.serial=serial.Serial()

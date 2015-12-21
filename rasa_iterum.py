@@ -1,24 +1,44 @@
 #!/usr/bin/env python
 
 import arduino
+from arduino import millis
+import cli
 import packetize
 import sys
 import time
-
-def millis():
-	return int(round(time.time()*1000))
+import window
 
 if __name__=="__main__":
+	values={"--gui":False,"--serial":True}
+
+	try:
+		values=cli.parse(sys.argv[1:],{"--no-gui":False,"--serial":True})
+	except Exception as error:
+		print(error)
+		print("Usage: ./rasa_iterum.py [--no-gui][--serial NAME]")
+		exit(1)
+
+	if not values["--no-gui"]:
+		window=window.window_t()
+		exit(0)
+
+	print("Rasa Iterum")
 	ard=arduino.arduino_t()
 	parser=packetize.parser_t()
 	parser.reset()
 
 	while True:
 		try:
-			print('Searching for an Arduino...')
-			ard.connect()
 
-			print('Arduino found on port "'+ard.name()+'".')
+			if values["--serial"]==True:
+				print('Searching for an Arduino...')
+				ard.connect()
+				print('Arduino found on port "'+ard.name()+'".')
+
+			else:
+				print('Attempting to connect to "'+values["--serial"]+'"...')
+				ard.connect(values["--serial"])
+
 			print('Checking Arduino...')
 
 			check_send_timer=millis()

@@ -1,5 +1,5 @@
-#!/usr/bin/env python
 import arduino
+from arduino import millis
 from enum import Enum
 import packetize
 import serial
@@ -13,9 +13,6 @@ class state_t(Enum):
 	FLUSHING=3,
 	SETDTR=4,
 	CONNECTED=5
-
-def millis():
-	return int(round(time.time()*1000))
 
 class window_t:
 	def __init__(self):
@@ -236,6 +233,3 @@ class window_t:
 	def show_m(self):
 		self.frame.Show()
 		self.app.MainLoop()
-
-if __name__=="__main__":
-	window=window_t()
