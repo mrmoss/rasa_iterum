@@ -155,6 +155,7 @@ class window_t:
 
 					if sensors and 'p' in sensors:
 						checked=True
+						packetize.send_packet('{"c":{}}',self.arduino)
 						self.set_status('Connected to an '+str(sensors['p'])+' on "'+self.arduino.name()+'".')
 						break
 

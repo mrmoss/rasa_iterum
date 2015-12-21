@@ -29,7 +29,6 @@ if __name__=="__main__":
 
 	while True:
 		try:
-
 			if values["--serial"]==True:
 				print('Searching for an Arduino...')
 				ard.connect()
@@ -60,7 +59,7 @@ if __name__=="__main__":
 				raise Exception('Firmware not responding.')
 
 			print('Sending configuration...')
-			packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ard)
+			packetize.send_packet('{"c":{}}',ard)
 			print('Connected:')
 
 			send_timer=millis()+10
