@@ -23,7 +23,7 @@ def send_packet(data,serial):
 	packet+=data
 	packet+=make_crc(data)
 	serial.write(packet)
-	serial.flushOutput()
+	serial.flush()
 
 class parser_t:
 	PACKET_HEADER=chr(0x5f)
@@ -32,7 +32,7 @@ class parser_t:
 		self.reset()
 
 	def parse(self,serial):
-		while serial.inWaiting()>0:
+		while serial.available()>0:
 			temp=serial.read()
 
 			if self.state_m==state_t.HEADER and temp==self.PACKET_HEADER:
