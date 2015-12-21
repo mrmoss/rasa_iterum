@@ -38,15 +38,14 @@ class arduino_t:
 		except:
 			self.close()
 
-		if self.serial.isOpen():
-			self.serial.setDTR(False)
-			time.sleep(1)
-			self.serial.flushInput()
-			self.serial.setDTR(True)
-			time.sleep(1)
-			return
+		if not self.is_opened():
+			raise Exception('Could not open Arduino on serial port "'+self.serial.port+'".')
 
-		raise Exception('Could not open Arduino on serial port "'+self.serial.port+'".')
+		self.serial.setDTR(False)
+		time.sleep(1)
+		self.serial.flushInput()
+		self.serial.setDTR(True)
+		time.sleep(1)
 
 	def close(self):
 		self.serial.close()
