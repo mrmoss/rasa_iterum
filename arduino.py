@@ -39,7 +39,7 @@ class arduino_t:
 			self.close()
 
 		if not self.is_opened():
-			raise Exception('Could not open Arduino on serial port "'+self.serial.port+'".')
+			raise Exception('Could not open Arduino on serial port "'+str(port)+'".')
 
 		self.serial.setDTR(False)
 		time.sleep(2)
