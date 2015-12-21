@@ -1,88 +1,74 @@
 #!/usr/bin/env python
 
-import serial
-import time
+
+import arduino
 import packetize
-from packetize import parser_t
-import random
+import sys
+import time
 
-def serial_list():
-	valid_ports=[]
+def handle_same_line():
+	global same_line
 
-	try:
-		import serial.tools.list_ports
-
-		for port in serial.tools.list_ports.comports():
-			if port[2]!='n/a':
-				valid_ports.append(port[0])
-
-	except:
-		None
-
-	return valid_ports
-
-def millis():
-	return int(round(time.time()*1000))
+	if same_line:
+		print('')
+		same_line=False
 
 if __name__=="__main__":
-	ser=serial.Serial()
-	parser=parser_t()
-	timer=millis()+2000
-	start_time=0
-	pos=40
-	test=True
+	global same_line
+	same_line=False
+	parser=packetize.parser_t()
+	ard=arduino.connect()
 
 	while True:
 		try:
-			print("connecting...")
-			ser.baudrate=57600
-			ser.port="/dev/ttyACM1"
-			ser.open()
+			same_line=False
+			sys.stdout.write('Looking for an Arduino...')
+			time.sleep(1)
+			sys.stdout.flush()
+			ards=arduino.list()
 
-			if ser.isOpen():
-				ser.setDTR(False)
+			if len(ards)>0:
+				print('found.')
+				ard=arduino.connect(ards[0])
+				parser.reset()
 				time.sleep(2)
-				ser.flushInput()
-				ser.setDTR(True)
-				time.sleep(2)
-				print("connected")
-				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54]}}',ser)
-				#packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"s":[10]}}',ser)
-				packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ser)
+			else:
+				print('none found.')
+				ard=arduino.connect()
+				continue
 
-				while ser.isOpen():
-					if millis()>timer:
-						#if test:
-						#packetize.send_packet('{"u":{"o":['+str(pos)+','+str(pos)+']}}',ser)
-						#packetize.send_packet('{"u":{"s":['+str(pos)+']}}',ser);
-						packetize.send_packet('{"u":{"s":['+str(pos)+'],'+
-							'"o":['+str(pos)+','+str(int(pos>90))+','+str(random.randint(0,255))+'],'+
-							'"b":['+str(pos-70)+']}}',ser)
-						#packetize.send_packet('{"u":{"o":[0,1,255]}}',ser)
-						#packetize.send_packet('{}',ser)
-						test=False
-						#else:
-						#	packetize.send_packet('{"u":{}}',ser)
-						start_time=millis()
-						timer=millis()+10
-						pos+=10
+			print('Sending configuration.')
+			packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ard)
+			print('Connected:')
 
-						if(pos>140):
-							pos=0
+			timer=arduino.millis()+10
+			start_time=0
 
-					#while ser.inWaiting()>0:
-					#	print ser.read(),
+			while ard.isOpen():
+				if arduino.millis()>timer:
+					packetize.send_packet('{"u":{}}',ard)
+					start_time=arduino.millis()
+					timer=arduino.millis()+10
 
-					sensors=parser.parse(ser)
-					if len(sensors)>0:
-						print(sensors+" ("+str(millis()-start_time)+"ms)")
+				sensors=parser.parse(ard)
+
+				if len(sensors)>0:
+					same_line=True
+					sys.stdout.write('\r'+sensors+' ('+str(arduino.millis()-start_time)+'ms)')
+					sys.stdout.flush()
+
+				time.sleep(0.1)
+
+			handle_same_line()
+			print('Arduino disconnected.')
 
 		except KeyboardInterrupt:
-			ser.close()
+			ard.close()
+			handle_same_line()
 			exit(0)
 
 		except Exception as error:
-			print(error)
-			ser.close()
-			time.sleep(0.3)
+			ard.close()
+			handle_same_line()
+			print('Error:  '+str(error))
 			pass
