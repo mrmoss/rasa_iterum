@@ -42,10 +42,10 @@ class arduino_t:
 			raise Exception('Could not open Arduino on serial port "'+self.serial.port+'".')
 
 		self.serial.setDTR(False)
-		time.sleep(1)
+		time.sleep(2)
 		self.serial.flushInput()
 		self.serial.setDTR(True)
-		time.sleep(1)
+		time.sleep(2)
 
 	def close(self):
 		self.serial.close()
@@ -65,3 +65,6 @@ class arduino_t:
 
 	def flush(self):
 		self.serial.flushOutput()
+
+	def name(self):
+		return str(self.serial.port)

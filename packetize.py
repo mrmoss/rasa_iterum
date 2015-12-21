@@ -1,4 +1,5 @@
 from enum import Enum
+import json
 import struct
 
 class state_t(Enum):
@@ -53,15 +54,20 @@ class parser_t:
 					self.state_m=state_t.CRC
 
 			elif self.state_m==state_t.CRC:
-				ret=""
+				ret=None
 
 				if temp==make_crc(self.buffer_m):
 					ret=self.buffer_m
 
+					try:
+						ret=json.loads(ret)
+					except:
+						ret=None
+
 				self.reset()
 				return ret
 
-		return ""
+		return None
 
 	def reset(self):
 		self.buffer_m=""

@@ -9,32 +9,53 @@ def millis():
 	return int(round(time.time()*1000))
 
 if __name__=="__main__":
-	parser=packetize.parser_t()
-
 	ard=arduino.arduino_t()
+	parser=packetize.parser_t()
+	parser.reset()
 
 	while True:
 		try:
-			print('Looking for an Arduino...')
+			print('Searching for an Arduino...')
 			ard.connect()
 
-			print('Sending configuration.')
-			packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ard)
-			print('Connected:')
+			print('Arduino found on port "'+ard.name()+'".')
+			print('Checking Arduino...')
 
-			timer=millis()+10
-			start_time=0
+			check_send_timer=millis()
+			check_timer=millis()+2000
+			checked=False
 
-			while ard.is_opened():
-				if millis()>timer:
-					packetize.send_packet('{"u":{}}',ard)
-					start_time=millis()
-					timer=millis()+10
+			while ard.is_opened() and millis()<=check_timer:
+				if millis()>check_send_timer:
+					packetize.send_packet('{"s":{}}',ard)
+					check_send_timer=millis()+100
 
 				sensors=parser.parse(ard)
 
-				if len(sensors)>0:
-					print(sensors+' ('+str(millis()-start_time)+'ms)')
+				if sensors and 'm' in sensors:
+					checked=True
+					break
+
+			if not checked:
+				raise Exception('Firmware not responding.')
+
+			print('Sending configuration...')
+			packetize.send_packet('{"c":{"o":[47,48,13],"i":[11,54],"b":[{"l":5,"r":6}]}}',ard)
+			print('Connected:')
+
+			send_timer=millis()+10
+			send_start_time=0
+
+			while ard.is_opened():
+				if millis()>send_timer:
+					packetize.send_packet('{"u":{}}',ard)
+					send_timer=millis()+10
+					send_start_time=millis()
+
+				sensors=parser.parse(ard)
+
+				if sensors:
+					print(str(sensors)+' ('+str(millis()-send_start_time)+'ms)')
 
 				time.sleep(0.1)
 

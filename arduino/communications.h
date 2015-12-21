@@ -2,6 +2,7 @@
 #define COMMUNICATIONS_H
 
 #include <Arduino.h>
+#include "avr_cpunames.h"
 #include "bts.h"
 #include "input_pin.h"
 #include "json.h"
@@ -90,9 +91,7 @@ namespace communications
 		if(json["u"].size()>0)
 		{
 			std::string sensor_json;
-			sensor_json+="{\"m\":";
-			sensor_json+=std::to_string((uint32_t)freeMemory());
-			sensor_json+=',';
+			sensor_json+="{";
 
 			if(update(inputs,json,sensor_json))
 				sensor_json+=",";
@@ -112,6 +111,17 @@ namespace communications
 
 			send_packet(sensor_json,Serial);
 		}
+
+        if(json["s"].size()>0)
+        {
+            std::string status_json;
+            status_json+="{\"p\":\"";
+            status_json+=std::string(_AVR_CPU_NAME_);
+            status_json+="\",\"m\":";
+            status_json+=std::to_string((uint32_t)freeMemory());
+            status_json+='}';
+            send_packet(status_json,Serial);
+        }
 	}
 
 	template<typename T> void loop(peripheral_list_t<T>& peripherals)
