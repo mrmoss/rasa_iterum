@@ -44,14 +44,14 @@ if __name__=="__main__":
 			print('Firmware confirmed ('+status['p']+' with '+str(status['m'])+' bytes of free RAM).')
 
 			print('Sending configuration...')
-			firmware.send_configuration(ard,parser,'{c:{i:[14,15],b:[{l:5,r:6}]}}')
+			firmware.send_configuration(ard,parser,'{c:{}}')
 			print('Configuration verified.')
 			print('Connected.')
 
 			while ard.is_opened():
 				packetize.send_packet('{u:{}}',ard)
 				sensors=parser.parse(ard)
-#
+
 				if sensors:
 					sys.stdout.write(str(sensors)+"\n")
 					sys.stdout.flush()

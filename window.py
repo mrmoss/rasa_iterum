@@ -76,7 +76,7 @@ class window_t:
 			time.sleep(1)
 
 			self.mutex.acquire()
-			firmware.send_configuration(self.arduino,self.parser,'{c:{i:[14,15],b:[{l:5,r:6}]}}')
+			firmware.send_configuration(self.arduino,self.parser,'{c:{}}')
 			self.mutex.release()
 			self.set_status('Configuration verified.')
 
