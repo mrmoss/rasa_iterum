@@ -2,6 +2,7 @@ import arduino
 from arduino import millis
 import firmware
 import packetize
+import re
 import serial
 import threading
 import time
@@ -29,22 +30,9 @@ class window_t:
 
 		self.create_panel_box_m()
 
-		self.timer=wx.Timer(self.frame)
-		self.frame.Bind(wx.EVT_TIMER,self.on_timer_m)
-		self.timer.Start(50)
+		self.create_timer_m()
 
-		self.b_text=wx.StaticText(self.panel,-1,"Serial Port")
-		self.box.Add(self.b_text,0,wx.ALL,10)
-		self.b_text.SetFont(wx.Font(14,wx.SWISS,wx.NORMAL,wx.BOLD))
-		self.b_text.SetSize(self.b_text.GetBestSize())
-
-		self.b_combo=wx.ComboBox(self.panel,-1,style=wx.CB_READONLY)
-		self.box.Add(self.b_combo,0,wx.ALL,10)
-
-		self.b_connect=wx.Button(self.panel,label="Connect")
-		self.box.Add(self.b_connect,0,wx.ALL,10)
-		self.b_connect.Bind(wx.EVT_BUTTON,self.on_connect_m)
-		self.b_connect.Enable(False)
+		self.create_gui_m()
 
 		self.show_m()
 
@@ -106,6 +94,8 @@ class window_t:
 		if self.arduino.is_opened():
 			self.disconnect()
 		else:
+			self.modify_input_m(self.i_school)
+			self.modify_input_m(self.i_robot)
 			self.thread=threading.Thread(target=self.connect)
 			self.thread.start()
 
@@ -146,8 +136,11 @@ class window_t:
 		else:
 			disconnect_enabled=True
 
+		self.i_school.Enable(not self.arduino.is_opened())
+		self.i_robot.Enable(not self.arduino.is_opened())
 		self.b_combo.Enable(enabled)
-		self.b_connect.Enable(enabled or disconnect_enabled)
+		self.b_connect.Enable(self.validate_input_m(self.i_school) and
+			self.validate_input_m(self.i_robot) and (enabled or disconnect_enabled))
 
 	def on_quit_m(self,event):
 		if len(self.prompt_text)>0:
@@ -171,8 +164,25 @@ class window_t:
 	def ignore_m(self,event):
 		None
 
+	def validate_input_m(self,input):
+		return len(input.GetValue())>0
+
+	def modify_input_m(self,input):
+		value=str(input.GetValue()).lower()
+		trans=''.join(chr(c) if chr(c).isalnum() else ' ' for c in range(256))
+		value=value.translate(trans)
+		value=re.sub('\s+','_',value)
+
+		if len(value)>16:
+			value=value[:16]
+
+		input.SetValue(value)
+
 	def create_frame_m(self,title):
-		self.frame=wx.Frame(None,title=title)
+		size=(400,240)
+		self.frame=wx.Frame(None,title=title,size=size)
+		self.frame.SetMinSize(size)
+		self.frame.SetMaxSize(size)
 		self.frame.Bind(wx.EVT_CLOSE,self.on_quit_m)
 		self.frame.Bind(wx.EVT_MENU_HIGHLIGHT,self.ignore_m)
 
@@ -202,6 +212,41 @@ class window_t:
 		self.panel=wx.Panel(self.frame)
 		self.panel.SetSizer(self.box)
 		self.panel.Layout()
+
+	def create_timer_m(self):
+		self.timer=wx.Timer(self.frame)
+		self.frame.Bind(wx.EVT_TIMER,self.on_timer_m)
+		self.timer.Start(50)
+
+	def create_gui_m(self):
+		self.row_0=wx.BoxSizer(wx.HORIZONTAL)
+		self.box.Add(self.row_0,0,wx.ALL,10)
+
+		self.t_school=wx.StaticText(self.panel,-1,"School",size=(64,-1))
+		self.row_0.Add(self.t_school,0,wx.ALL,10)
+
+		self.i_school=wx.TextCtrl(self.panel,-1,size=(128,-1))
+		self.row_0.Add(self.i_school,0,wx.ALL,10)
+
+		self.row_1=wx.BoxSizer(wx.HORIZONTAL)
+		self.box.Add(self.row_1,0,wx.ALL,10)
+
+		self.t_robot=wx.StaticText(self.panel,-1,"Robot",size=(64,-1))
+		self.row_1.Add(self.t_robot,0,wx.ALL,10)
+
+		self.i_robot=wx.TextCtrl(self.panel,-1,size=(128,-1))
+		self.row_1.Add(self.i_robot,0,wx.ALL,10)
+
+		self.row_2=wx.BoxSizer(wx.HORIZONTAL)
+		self.box.Add(self.row_2,0,wx.ALL,10)
+
+		self.b_combo=wx.ComboBox(self.panel,-1,size=(240,-1),style=wx.CB_READONLY)
+		self.row_2.Add(self.b_combo,0,wx.ALL,10)
+
+		self.b_connect=wx.Button(self.panel,label="Connect")
+		self.row_2.Add(self.b_connect,0,wx.ALL,10)
+		self.b_connect.Bind(wx.EVT_BUTTON,self.on_connect_m)
+		self.b_connect.Enable(False)
 
 	def show_m(self):
 		self.frame.Show()
