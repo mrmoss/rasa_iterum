@@ -13,12 +13,12 @@ class json_ro_t
       if(str_m.c_str()!=NULL)
         tokens_m=parse_json2(str_m.c_str(),str_m.size());
     }
-    
+
     json_ro_t(const json_ro_t& copy):str_m(copy.str_m),tokens_m(NULL)
     {
       *this=copy;
     }
-    
+
     json_ro_t& operator=(const json_ro_t& copy)
     {
       if(this!=&copy)
@@ -30,20 +30,20 @@ class json_ro_t
           free(tokens_m);
           tokens_m=NULL;
         }
-  
+
         if(str_m.c_str()!=NULL)
           tokens_m=parse_json2(str_m.c_str(),str_m.size());
       }
 
       return *this;
     }
-    
+
     ~json_ro_t()
     {
       free(tokens_m);
       tokens_m=NULL;
     }
-    
+
     inline std::string operator[](const std::string& key)
     {
       if(key.c_str()==NULL)

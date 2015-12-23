@@ -86,6 +86,8 @@ namespace communications
       configure(outputs,json);
       configure(servos,json);
       configure(btss,json);
+
+      send_packet("{\"c\":{}}",Serial);
     }
 
     if(json["u"].size()>0)

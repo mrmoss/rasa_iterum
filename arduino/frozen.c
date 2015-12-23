@@ -299,7 +299,7 @@ static int parse_object(struct frozen *f) {
 
 static int doit(struct frozen *f) {
   int ret = 0;
-    
+
   if (f->cur == 0 || f->end < f->cur) return JSON_STRING_INVALID;
   if (f->end == f->cur) return JSON_STRING_INCOMPLETE;
 
@@ -310,7 +310,7 @@ static int doit(struct frozen *f) {
   } else {
       return ret;
   }
-  
+
   TRY(capture_ptr(f, f->cur, JSON_TYPE_EOF));
   capture_len(f, f->num_tokens, f->cur);
   return 0;
