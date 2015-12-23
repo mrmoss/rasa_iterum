@@ -1,27 +1,21 @@
 import arduino
 from arduino import millis
-from enum import Enum
+import firmware
 import packetize
 import serial
+import threading
 import time
 import wx
-
-class state_t(Enum):
-	DISCONNECTED=0,
-	CONNECTING=1,
-	UNSETDTR=2,
-	FLUSHING=3,
-	SETDTR=4,
-	CONNECTED=5
 
 class window_t:
 	def __init__(self):
 		self.arduino=arduino.arduino_t()
 		self.parser=packetize.parser_t()
-		self.state_m=state_t.DISCONNECTED
 		self.state_timer_m=0
-		self.arduino_port=""
+		self.old_arduino_name=""
+		self.old_port_list=[]
 		self.prompt_text=""
+		self.mutex=threading.Lock()
 
 		self.app=wx.App(redirect=True)
 		self.create_frame_m("Rasa Iterum")
@@ -52,116 +46,108 @@ class window_t:
 		self.b_connect.Bind(wx.EVT_BUTTON,self.on_connect_m)
 		self.b_connect.Enable(False)
 
-		self.build_serial_list()
-
 		self.show_m()
 
 	def set_status(self,text):
 		self.statusbar.SetStatusText(text)
 
-	def disconnect(self):
+	def connect(self):
+		self.b_connect.SetLabel("Disconnect")
+		self.b_combo.Enable(False)
+		self.old_arduino_name=self.b_combo.GetValue()
+
+		try:
+			self.set_status('Attempting to connect to "'+self.old_arduino_name+'"...')
+			self.mutex.acquire()
+			self.arduino.connect(self.old_arduino_name)
+			self.mutex.release()
+
+			time.sleep(1)
+			self.set_status('Checking firmware...')
+			time.sleep(1)
+
+			self.mutex.acquire()
+			status=firmware.get_status_blocking(self.arduino,self.parser)
+			self.mutex.release()
+			self.set_status('Firmware confirmed ('+status['p']+' with '+str(status['m'])+' bytes of free RAM).')
+
+			time.sleep(1)
+			self.set_status('Sending configuration...')
+			time.sleep(1)
+
+			self.mutex.acquire()
+			firmware.send_configuration(self.arduino,self.parser,'{c:{i:[14,15],b:[{l:5,r:6}]}}')
+			self.mutex.release()
+			self.set_status('Configuration verified.')
+
+			time.sleep(1)
+			self.set_status('Connected ('+status['p']+' on \"'+self.old_arduino_name+'\").')
+
+		except Exception as error:
+			self.mutex.release()
+			self.set_status(str(error))
+			self.disconnect(False)
+
+	def disconnect(self,update_status=True):
+		self.mutex.acquire()
 		self.arduino.close()
+		self.mutex.release()
+
 		self.parser.reset()
-		self.state_m=state_t.DISCONNECTED
-		self.arduino_port=""
+		self.old_arduino_name=""
 		self.prompt_text=""
-		self.build_serial_list()
+
 		self.b_connect.SetLabel("Connect")
-		self.set_status('Disconnected.')
+
+		if update_status:
+			self.set_status('Disconnected.')
 
 	def on_connect_m(self,event):
 		if self.arduino.is_opened():
 			self.disconnect()
-
 		else:
-			if self.b_combo.GetCurrentSelection()>=0:
-				self.b_connect.SetLabel("Disconnect")
-				self.b_combo.Enable(False)
-
-				try:
-					self.state_m=state_t.CONNECTING
-					self.arduino_port=self.b_combo.GetValue()
-					self.prompt_text="Serial port communication in progress, really quit?"
-				except Exception as error:
-					self.set_status(str(error))
+			self.thread=threading.Thread(target=self.connect)
+			self.thread.start()
 
 	def on_timer_m(self,event):
-		self.build_serial_list()
+		port_list=self.arduino.list()
+		port_list.sort()
 
-		if self.b_combo.GetCurrentSelection()<0:
+		enabled=True
+		disconnect_enabled=False
+		old_selected=self.b_combo.GetValue()
+
+		if self.arduino.is_opened() and self.old_arduino_name in port_list:
+			enabled=False
+
+		if set(self.old_port_list)!=set(port_list):
+			self.old_port_list=port_list
+			self.b_combo.Clear()
+			in_list=False
+
+			for ii in range(0,len(port_list)):
+				self.b_combo.Append(port_list[ii])
+
+				if old_selected==port_list[ii]:
+					self.b_combo.SetSelection(ii)
+					in_list=True
+
+			if len(port_list)>0 and not in_list:
+				self.b_combo.SetSelection(0)
+
+		if len(port_list)<=0 or not self.old_arduino_name in port_list:
 			self.disconnect()
-			self.b_combo.Enable(False)
-			self.b_connect.Enable(False)
-			return
 
-		if self.state_m==state_t.DISCONNECTED:
-			self.b_combo.Enable(self.b_combo.GetCurrentSelection()>=0)
-			self.b_connect.Enable(self.b_combo.GetCurrentSelection()>=0)
+		if len(port_list)<=0:
+			enabled=False
+			self.b_combo.SetSelection(-1)
+			self.b_combo.SetValue("No Serial Ports")
 
-		if self.state_m==state_t.CONNECTING:
-			if len(self.arduino_port)>0:
-				self.b_connect.SetLabel("Disconnect")
-				self.arduino.serial=serial.Serial()
-				self.arduino.serial.port=self.arduino_port
-				self.old_arduino_port=self.arduino_port
-				self.arduino.serial.baudrate=57600
+		else:
+			disconnect_enabled=True
 
-				try:
-					self.arduino.serial.open()
-				except:
-					self.disconnect()
-
-				if not self.arduino.is_opened():
-					self.disconnect()
-					self.set_status('Could not open Arduino on serial port "'+self.old_arduino_port+'".')
-
-				if self.arduino.is_opened():
-					self.set_status('Connecting to "'+self.arduino.name()+'".')
-					self.state_m=state_t.UNSETDTR
-					self.arduino.serial.setDTR(False)
-					self.state_timer_m=millis()+2000
-
-		if self.state_m==state_t.UNSETDTR:
-			if millis()>self.state_timer_m:
-				self.arduino.serial.flushInput()
-				self.arduino.serial.setDTR(True)
-				self.state_m=state_t.FLUSHING
-				self.state_timer_m=millis()+2000
-
-		if self.state_m==state_t.FLUSHING:
-			self.set_status('Connecting to "'+self.arduino.name()+'"..')
-
-			if millis()>self.state_timer_m:
-				self.state_m=state_t.SETDTR
-				self.state_timer_m=millis()+2000
-
-		if self.state_m==state_t.SETDTR:
-			self.set_status('Connecting to "'+self.arduino.name()+'"...')
-
-			if millis()>self.state_timer_m:
-				self.state_m=state_t.CONNECTED
-				self.set_status('Handshaking with "'+self.arduino.name()+'".')
-
-				check_send_timer=millis()
-				check_timer=millis()+2000
-				checked=False
-
-				while self.arduino.is_opened() and millis()<=check_timer:
-					if millis()>check_send_timer:
-						packetize.send_packet('{"s":{}}',self.arduino)
-						check_send_timer=millis()+100
-
-					sensors=self.parser.parse(self.arduino)
-
-					if sensors and 'p' in sensors:
-						checked=True
-						packetize.send_packet('{"c":{}}',self.arduino)
-						self.set_status('Connected to an '+str(sensors['p'])+' on "'+self.arduino.name()+'".')
-						break
-
-				if not checked:
-					self.disconnect()
-					self.set_status('Invalid handshake from "'+self.arduino.name()+'".')
+		self.b_combo.Enable(enabled)
+		self.b_connect.Enable(enabled or disconnect_enabled)
 
 	def on_quit_m(self,event):
 		if len(self.prompt_text)>0:
@@ -181,20 +167,6 @@ class window_t:
 			"About",wx.OK|wx.ICON_QUESTION)
 		result=dialog.ShowModal()
 		dialog.Destroy()
-
-	def build_serial_list(self):
-		self.b_combo.Clear()
-
-		port_list=self.arduino.list()
-
-		for port in port_list:
-			self.b_combo.Append(port)
-
-		if len(port_list)>0:
-			self.b_combo.SetSelection(0)
-		else:
-			self.b_combo.SetSelection(-1)
-			self.b_combo.SetValue("No Serial Ports")
 
 	def ignore_m(self,event):
 		None

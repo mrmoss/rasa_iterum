@@ -3,6 +3,7 @@
 import arduino
 from arduino import millis
 import cli
+import firmware
 import packetize
 import sys
 import time
@@ -38,47 +39,26 @@ if __name__=="__main__":
 				print('Attempting to connect to "'+values["--serial"]+'"...')
 				ard.connect(values["--serial"])
 
-			print('Checking Arduino...')
-
-			check_send_timer=millis()
-			check_timer=millis()+2000
-			checked=False
-
-			while ard.is_opened() and millis()<=check_timer:
-				if millis()>check_send_timer:
-					packetize.send_packet('{"s":{}}',ard)
-					check_send_timer=millis()+100
-
-				sensors=parser.parse(ard)
-
-				if sensors and 'm' in sensors:
-					checked=True
-					break
-
-			if not checked:
-				raise Exception('Firmware not responding.')
+			print('Checking firmware...')
+			status=firmware.get_status_blocking(ard,parser)
+			print('Firmware confirmed ('+status['p']+' with '+str(status['m'])+' bytes of free RAM).')
 
 			print('Sending configuration...')
-			packetize.send_packet('{"c":{}}',ard)
-			print('Connected:')
-
-			send_timer=millis()+10
-			send_start_time=0
+			firmware.send_configuration(ard,parser,'{c:{i:[14,15],b:[{l:5,r:6}]}}')
+			print('Configuration verified.')
+			print('Connected.')
 
 			while ard.is_opened():
-				if millis()>send_timer:
-					packetize.send_packet('{"u":{}}',ard)
-					send_timer=millis()+10
-					send_start_time=millis()
-
+				packetize.send_packet('{u:{}}',ard)
 				sensors=parser.parse(ard)
-
+#
 				if sensors:
-					print(str(sensors)+' ('+str(millis()-send_start_time)+'ms)')
+					sys.stdout.write(str(sensors)+"\n")
+					sys.stdout.flush()
 
 				time.sleep(0.1)
 
-			print('Arduino disconnected.')
+			print('Disconnected.')
 
 		except KeyboardInterrupt:
 			ard.close()
@@ -86,6 +66,6 @@ if __name__=="__main__":
 
 		except Exception as error:
 			ard.close()
-			print('Error:  '+str(error))
+			print(str(error))
 			time.sleep(1)
 			pass

@@ -18,13 +18,14 @@ def make_crc(data):
 	return chr(crc)
 
 def send_packet(data,serial):
-	packet=""
-	packet+=chr(0x5f)
-	packet+=struct.pack('<H',len(data))
-	packet+=data
-	packet+=make_crc(data)
-	serial.write(packet)
-	serial.flush()
+	if serial.is_opened():
+		packet=""
+		packet+=chr(0x5f)
+		packet+=struct.pack('<H',len(data))
+		packet+=data
+		packet+=make_crc(data)
+		serial.write(packet)
+		serial.flush()
 
 class parser_t:
 	PACKET_HEADER=chr(0x5f)
@@ -33,7 +34,7 @@ class parser_t:
 		self.reset()
 
 	def parse(self,serial):
-		while serial.available()>0:
+		while serial.is_opened() and serial.available()>0:
 			temp=serial.read()
 
 			if self.state_m==state_t.HEADER and temp==self.PACKET_HEADER:
