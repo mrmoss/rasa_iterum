@@ -7,53 +7,65 @@
 
 class json_ro_t
 {
-	public:
-		json_ro_t(const std::string& str):str_m(str),tokens_m(NULL)
-		{
-			if(str_m.c_str()!=NULL)
-				tokens_m=parse_json2(str_m.c_str(),str_m.size());
-		}
+  public:
+    json_ro_t(const std::string& str):str_m(str),tokens_m(NULL)
+    {
+      if(str_m.c_str()!=NULL)
+        tokens_m=parse_json2(str_m.c_str(),str_m.size());
+    }
+    
+    json_ro_t(const json_ro_t& copy):str_m(copy.str_m),tokens_m(NULL)
+    {
+      *this=copy;
+    }
+    
+    json_ro_t& operator=(const json_ro_t& copy)
+    {
+      if(this!=&copy)
+      {
+        str_m=copy.str_m;
 
-		json_ro_t(const json_ro_t& copy):str_m(copy.str_m),tokens_m(NULL)
-		{
-			*this=copy;
-		}
+        if(tokens_m)
+        {
+          free(tokens_m);
+          tokens_m=NULL;
+        }
+  
+        if(str_m.c_str()!=NULL)
+          tokens_m=parse_json2(str_m.c_str(),str_m.size());
+      }
 
-		json_ro_t& operator=(const json_ro_t& copy)
-		{
-			if(this!=&copy)
-			{
-				str_m=copy.str_m;
+      return *this;
+    }
+    
+    ~json_ro_t()
+    {
+      free(tokens_m);
+      tokens_m=NULL;
+    }
+    
+    inline std::string operator[](const std::string& key)
+    {
+      if(key.c_str()==NULL)
+        return "";
 
-				if(str_m.c_str()!=NULL)
-					tokens_m=parse_json2(str_m.c_str(),str_m.size());
-			}
+      if(tokens_m==NULL)
+        tokens_m=parse_json2(str_m.c_str(),str_m.size());
 
-			return *this;
-		}
+      if(tokens_m==NULL)
+        return "";
 
-		~json_ro_t()
-		{
-			free(tokens_m);
-			tokens_m=NULL;
-		}
+      json_token* value=find_json_token(tokens_m,key.c_str());
 
-		inline std::string operator[](const std::string& key)
-		{
-			if(key.c_str()==NULL||tokens_m==NULL)
-				return "";
+      if(value==NULL)
+        return "";
 
-			json_token* value=find_json_token(tokens_m,key.c_str());
+      return std::string(value->ptr,value->len);
+    }
 
-			if(value==NULL)
-				return "";
-
-			return std::string(value->ptr,value->len);
-		}
-
-	private:
-		std::string str_m;
-		json_token* tokens_m;
+  private:
+    std::string str_m;
+    json_token* tokens_m;
 };
 
 #endif
