@@ -4,6 +4,7 @@ import firmware
 import packetize
 import re
 import serial
+import sys
 import threading
 import time
 import wx
@@ -27,11 +28,8 @@ class window_t:
 		self.create_menu_bar_m()
 		self.create_file_menu_m()
 		self.create_help_menu_m()
-
 		self.create_panel_box_m()
-
 		self.create_timer_m()
-
 		self.create_gui_m()
 
 		self.show_m()
@@ -72,14 +70,18 @@ class window_t:
 			self.set_status('Connected ('+status['p']+' on \"'+self.old_arduino_name+'\").')
 
 		except Exception as error:
-			self.mutex.release()
+			try:
+				self.mutex.release()
+			except:
+				pass
 			self.set_status(str(error))
 			self.disconnect(False)
 
 	def disconnect(self,update_status=True):
-		self.mutex.acquire()
-		self.arduino.close()
-		self.mutex.release()
+		if self.arduino.is_opened():
+			self.mutex.acquire()
+			self.arduino.close()
+			self.mutex.release()
 
 		self.parser.reset()
 		self.old_arduino_name=""
@@ -90,13 +92,19 @@ class window_t:
 		if update_status:
 			self.set_status('Disconnected.')
 
+	def quit(self):
+		sys.exit()
+		self.frame.Destroy()
+
 	def on_connect_m(self,event):
 		if self.arduino.is_opened():
 			self.disconnect()
 		else:
+			self.prompt_text="Communication in progress, force quit?"
 			self.modify_input_m(self.i_school)
 			self.modify_input_m(self.i_robot)
 			self.thread=threading.Thread(target=self.connect)
+			self.thread.setDaemon(True)
 			self.thread.start()
 
 	def on_timer_m(self,event):
@@ -143,17 +151,19 @@ class window_t:
 			self.validate_input_m(self.i_robot) and (enabled or disconnect_enabled))
 
 	def on_quit_m(self,event):
+		quit=True
+
 		if len(self.prompt_text)>0:
 			dialog=wx.MessageDialog(self.frame,self.prompt_text,
 				"Confirm",wx.OK|wx.CANCEL|wx.ICON_QUESTION)
 			result=dialog.ShowModal()
 			dialog.Destroy()
 
-			if result==wx.ID_OK:
-				self.disconnect()
-				self.frame.Destroy()
-		else:
-			self.frame.Destroy()
+			if result!=wx.ID_OK:
+				quit=False
+
+		if quit:
+			self.quit()
 
 	def on_about_m(self,event):
 		dialog=wx.MessageDialog(self.frame,"Rasa Iterum about window...",
