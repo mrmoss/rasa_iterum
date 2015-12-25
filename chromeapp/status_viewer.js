@@ -20,6 +20,7 @@ function status_viewer_t(div)
 
 	this.textarea=document.createElement("textarea");
 	this.el.appendChild(this.textarea);
+	this.textarea.wrap="off";
 	this.textarea.readOnly=true;
 	this.textarea.style.resize="none";
 	this.textarea.style.width="100%";
