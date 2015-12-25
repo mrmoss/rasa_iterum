@@ -1,3 +1,17 @@
+/*var xhr=new XMLHttpRequest();
+xhr.open("GET","http://127.0.0.1:8081/superstar/test/demo/gui?get",true);
+xhr.onreadystatechange=function()
+{
+	if(xhr.readyState==4)
+	{
+		if(xhr.status==200)
+		{
+			console.log(xhr.responseText);
+		}
+	}
+}
+xhr.send();*/
+
 //state {disconnected=0,opening,firmware_check,configure,connected}
 //on_message - callback triggered when an error or status change is added.
 function connection_t(div,on_message)
