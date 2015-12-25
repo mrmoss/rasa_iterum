@@ -73,7 +73,7 @@ connection_t.prototype.check_firmware_m=function()
 		{
 			if(_this.state==2)
 				_this.raise_error_m();
-		},2000);
+		},1000);
 	}
 }
 
