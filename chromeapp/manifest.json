@@ -8,12 +8,14 @@
 	{
 		"background":
 		{
-			"scripts":["background.js","connection.js","packetize.js","serial_selector.js","status_viewer.js","window.js"]
+			"scripts":["js/src/background.js","js/src/connection.js","js/src/gui.js",
+				"js/src/packetize.js","js/src/serial_selector.js","js/src/status_viewer.js",
+				"js/src/superstar.js","js/src/window.js"]
 		}
 	},
 	"icons":
 	{
-		"16":"moose-16.png",
-		"128":"moose-128.png"
+		"16":"images/moose-16.png",
+		"128":"images/moose-128.png"
 	}
 }

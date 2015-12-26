@@ -1,19 +1,6 @@
-/*var xhr=new XMLHttpRequest();
-xhr.open("GET","http://127.0.0.1:8081/superstar/test/demo/gui?get",true);
-xhr.onreadystatechange=function()
-{
-	if(xhr.readyState==4)
-	{
-		if(xhr.status==200)
-		{
-			console.log(xhr.responseText);
-		}
-	}
-}
-xhr.send();*/
-
 //state {disconnected=0,opening,firmware_check,configure,connected}
 //on_message - callback triggered when an error or status change is added.
+//on_disconnect - callback triggered when a disconnect is triggered.
 function connection_t(div,on_message)
 {
 	if(!div)
@@ -22,6 +9,7 @@ function connection_t(div,on_message)
 	this.div=div;
 	this.el=document.createElement("div");
 	this.div.appendChild(this.el);
+
 	this.on_message=on_message;
 
 	var _this=this;
@@ -29,15 +17,42 @@ function connection_t(div,on_message)
 	this.serial=null;
 	this.serial_name=null;
 	this.serial_proc=null;
+	this.config="{c:{}}";
 	this.parser=new parser_t(function(str){_this.on_packet_m(str);});
-	this.serial_selector=new serial_selector_t(this.el,
-		function(port){_this.on_selector_connect_m(port);},
-		function(port){_this.on_selector_disconnect_m(port);});
 	this.state=0;
 	this.timeout=null;
 
 	chrome.serial.onReceive.addListener(function(info){_this.on_receive_m(info);});
 	chrome.serial.onReceiveError.addListener(function(info){_this.on_receive_error_m(info);});
+}
+
+connection_t.prototype.connect=function(port,config)
+{
+	if(this.state==0)
+	{
+		this.state=1;
+		var _this=this;
+		this.serial_name=port;
+
+		if(this.on_message)
+			this.on_message("Attempting to connect to \""+port+"\".");
+
+		if(config)
+		{
+			try
+			{
+				this.config=JSON.stringify(config);
+			}
+			catch(error)
+			{
+				this.raise_error_m("Invalid configuration \""+config+"\".");
+				this.disconnect();
+			}
+		}
+
+		chrome.serial.connect(port,{bitrate:57600},
+			function(connection_info){_this.on_connect_m(connection_info);});
+	}
 }
 
 connection_t.prototype.destroy=function()
@@ -49,27 +64,34 @@ connection_t.prototype.destroy=function()
 
 connection_t.prototype.disconnect=function()
 {
-	this.parser.reset();
-	this.serial_selector.disconnect();
 	this.serial_name=null;
 	this.serial_proc=null;
 
-	if(this.serial)
-	{
-		chrome.serial.disconnect(this.serial.connectionId,
-			function()
-			{
-				if(chrome.runtime.lastError)
-				{}
-			});
+	if(this.on_disconnect)
+		this.on_disconnect();
 
-		this.serial=null;
-	}
-
-	this.reset_timeout_m();
-
-	this.state=0;
+	this.disconnect_m();
 }
+
+connection_t.prototype.reconfigure=function(config)
+{
+	if(this.state==4)
+	{
+		try
+		{
+			this.disconnect_m();
+			this.config=JSON.stringify(config);
+			this.connect(this.serial_name);
+		}
+		catch(error)
+		{
+			this.raise_error_m("Invalid configuration \""+config+"\".");
+			this.disconnect();
+		}
+	}
+}
+
+
 
 
 connection_t.prototype.check_firmware_m=function()
@@ -93,8 +115,39 @@ connection_t.prototype.check_firmware_m=function()
 
 connection_t.prototype.configure_m=function(config)
 {
+	this.parser.reset();
+	this.state=3;
+	this.reset_timeout_m();
+
+	if(this.on_message)
+		this.on_message("Configuring \""+this.serial_name+"\".");
+
 	if(this.serial)
 		this.send_m(config,true);
+}
+
+connection_t.prototype.disconnect_m=function()
+{
+	this.parser.reset();
+
+	if(this.serial)
+	{
+		chrome.serial.disconnect(this.serial.connectionId,
+			function()
+			{
+				if(chrome.runtime.lastError)
+				{}
+			});
+
+		this.serial=null;
+
+		if(this.on_message)
+			this.on_message("Disconnected.");
+	}
+
+	this.reset_timeout_m();
+
+	this.state=0;
 }
 
 connection_t.prototype.on_connect_m=function(connection_info)
@@ -148,18 +201,13 @@ connection_t.prototype.on_packet_m=function(str)
 
 			if(this.state==2&&json.p&&json.m)
 			{
-				this.state=3;
-				this.reset_timeout_m();
 				this.serial_proc=json.p;
 
 				if(this.on_message)
 					this.on_message("Found "+json.p+" with "+json.m+" free bytes on \""+
 						this.serial_name+"\".");
 
-				if(this.on_message)
-					this.on_message("Configuring \""+this.serial_name+"\".");
-
-				this.configure_m("{c:{i:[14,15]},o:[5,6]}");
+				this.configure_m(this.config);
 			}
 			else if(this.state==3&&json.c)
 			{
@@ -189,33 +237,6 @@ connection_t.prototype.on_packet_m=function(str)
 			if(this.state!=4)
 				this.disconnect();
 		}
-	}
-}
-
-connection_t.prototype.on_selector_connect_m=function(port)
-{
-	if(this.state==0)
-	{
-		this.state=1;
-		var _this=this;
-		this.serial_name=port;
-
-		if(this.on_message)
-			this.on_message("Attempting to connect to \""+port+"\".");
-
-		chrome.serial.connect(port,{bitrate:57600},
-			function(connection_info){_this.on_connect_m(connection_info);});
-	}
-}
-
-connection_t.prototype.on_selector_disconnect_m=function(port)
-{
-	if(this.serial)
-	{
-		this.disconnect();
-
-		if(this.on_message)
-			this.on_message("Disconnected.");
 	}
 }
 

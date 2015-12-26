@@ -18,8 +18,8 @@ function serial_selector_t(div,on_connect,on_disconnect)
 	this.selected_value=null;
 
 	this.select=document.createElement("select");
-	this.select.style.marginRight="10px";
 	this.el.appendChild(this.select);
+	this.select.style.width="240px";
 
 	this.button=document.createElement("input");
 	this.el.appendChild(this.button);

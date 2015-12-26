@@ -1,9 +1,9 @@
 function on_launch()
 {
 	var width=400;
-	var height=320;
+	var height=400;
 
-	chrome.app.window.create('window.html',
+	chrome.app.window.create('/window.html',
 	{
 		'innerBounds':
 		{
