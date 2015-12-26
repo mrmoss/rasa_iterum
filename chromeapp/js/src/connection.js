@@ -37,21 +37,11 @@ connection_t.prototype.connect=function(port,config)
 		if(this.on_message)
 			this.on_message("Attempting to connect to \""+port+"\".");
 
-		if(config)
-		{
-			try
-			{
-				this.config=JSON.stringify(config);
-			}
-			catch(error)
-			{
-				this.raise_error_m("Invalid configuration \""+config+"\".");
-				this.disconnect();
-			}
-		}
+		this.set_config(config);
 
-		chrome.serial.connect(port,{bitrate:57600},
-			function(connection_info){_this.on_connect_m(connection_info);});
+		if(this.config)
+			chrome.serial.connect(port,{bitrate:57600},
+				function(connection_info){_this.on_connect_m(connection_info);});
 	}
 }
 
@@ -77,16 +67,30 @@ connection_t.prototype.reconfigure=function(config)
 {
 	if(this.state==4)
 	{
-		try
+		if(config)
+			this.set_config(config);
+
+		if(this.config)
 		{
 			this.disconnect_m();
-			this.config=JSON.stringify(config);
 			this.connect(this.serial_name);
+		}
+	}
+}
+
+connection_t.prototype.set_config=function(config)
+{
+	if(config)
+	{
+		try
+		{
+			this.config=JSON.stringify(config);
 		}
 		catch(error)
 		{
 			this.raise_error_m("Invalid configuration \""+config+"\".");
 			this.disconnect();
+			this.config=null;
 		}
 	}
 }

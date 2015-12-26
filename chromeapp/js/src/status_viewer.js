@@ -14,6 +14,8 @@ function status_viewer_t(div)
 	this.textarea.style.resize="none";
 	this.textarea.style.width="370px";
 	this.textarea.style.height="350px";
+
+	this.last_message="";
 }
 
 status_viewer_t.prototype.destroy=function()
@@ -23,6 +25,10 @@ status_viewer_t.prototype.destroy=function()
 
 status_viewer_t.prototype.show=function(message)
 {
-	this.textarea.innerHTML+=message+"\n";
-	this.textarea.scrollTop=this.textarea.scrollHeight;
+	if(message!=this.last_message)
+	{
+		this.last_message=message;
+		this.textarea.innerHTML+=message+"\n";
+		this.textarea.scrollTop=this.textarea.scrollHeight;
+	}
 }

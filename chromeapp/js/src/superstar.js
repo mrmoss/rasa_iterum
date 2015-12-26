@@ -10,7 +10,12 @@ function ss_get(superstar,path,on_success,on_error)
 			{
 				try
 				{
-					var json=JSON.parse(xhr.responseText);
+					var str=xhr.responseText;
+
+					if(str=="")
+						str="{}";
+
+					var json=JSON.parse(str);
 
 					if(on_success)
 						on_success(json);
@@ -18,7 +23,7 @@ function ss_get(superstar,path,on_success,on_error)
 				catch(error)
 				{
 					if(on_error)
-						on_error("Error parsing response \""+xhr.responseText+"\".");
+						on_error("Error parsing response \""+xhr.responseText+"\" ("+error+").");
 				}
 			}
 			else
@@ -39,7 +44,7 @@ function ss_set(superstar,path,json,on_success,on_error)
 		var json_str=encodeURIComponent(JSON.stringify(json));
 		var xhr=new XMLHttpRequest();
 
-		xhr.open("GET","http://"+superstar+"/superstar/"+path+"?set"+json_str,true);
+		xhr.open("GET","http://"+superstar+"/superstar/"+path+"?set="+json_str,true);
 		xhr.onreadystatechange=function()
 		{
 			if(xhr.readyState==4)
