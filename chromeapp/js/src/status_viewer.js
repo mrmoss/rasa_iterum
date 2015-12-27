@@ -7,7 +7,7 @@ function status_viewer_t(div)
 	this.el=document.createElement("div");
 	this.div.appendChild(this.el);
 
-	this.max_lines=200;
+	this.max_lines=40;
 	this.lines=[];
 
 	this.textarea=document.createElement("textarea");
