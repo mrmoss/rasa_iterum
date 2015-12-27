@@ -1,7 +1,8 @@
 //state {disconnected=0,opening,firmware_check,configure,connected}
-//on_message - callback triggered when an error or status change is added.
-//on_disconnect - callback triggered when a disconnect is triggered.
-function connection_t(div,on_message)
+//on_message(messag) - callback triggered when an error or status change is added.
+//on_disconnect() - callback triggered when a disconnect is triggered.
+//on_read(json) - callback triggered when a packet is read from the arduino.
+function connection_t(div,on_message,on_disconnect,on_read)
 {
 	if(!div)
 		return null;
@@ -13,6 +14,8 @@ function connection_t(div,on_message)
 	this.min_send_delay_ms=40;
 
 	this.on_message=on_message;
+	this.on_disconnect=on_disconnect;
+	this.on_read=on_read;
 
 	var _this=this;
 
@@ -231,8 +234,8 @@ connection_t.prototype.on_packet_m=function(str)
 			}
 			else if(this.state==4)
 			{
-				if(this.on_message)
-					this.on_message(str);
+				if(this.on_read)
+					this.on_read(JSON.parse(str));
 			}
 			else if(this.state>1)
 			{

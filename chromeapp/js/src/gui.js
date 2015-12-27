@@ -11,12 +11,13 @@ function gui_t(div)
 	var _this=this;
 
 	this.connection=new connection_t(this.el,
-		function(message){_this.status_viewer.show(message);});
+		function(message){_this.status_viewer.show(message);},
+		function(){_this.serial_selector.disconnect();},
+		function(json){_this.status_viewer.show("Got read: "+JSON.stringify(json));});
 
 	this.serial_selector=new serial_selector_t(this.el,
 		function(port){_this.connection.connect(port);},
 		function(port){_this.connection.disconnect(port);});
-	this.connection.on_disconnect=function(){_this.serial_selector.disconnect();};
 
 	this.status_viewer=new status_viewer_t(this.el);
 

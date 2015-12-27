@@ -97,6 +97,13 @@ serial_selector_t.prototype.build_list_m=function(ports)
 
 	this.select.disabled=(this.connected||this.select.options.length<=0);
 	this.button.disabled=(this.select.options.length<=0);
+
+	if(this.select.options.length<=0)
+	{
+		var option=document.createElement("option");
+		this.select.appendChild(option);
+		option.text="No serial ports.";
+	}
 }
 
 serial_selector_t.prototype.button_m=function()
