@@ -222,14 +222,14 @@ connection_t.prototype.on_packet_m=function(str)
 					this.on_message("Connected to \""+this.serial_name+
 						"\" ("+this.serial_proc+").");
 
-				this.send_m("{u:{o:[1,0]}}");
+				this.send_m("{w:{o:[1,0]}}");
 			}
 			else if(this.state==4)
 			{
 				if(this.on_message)
 					this.on_message(str);
 
-				this.send_m("{u:{o:[1,0]}}");
+				this.send_m("{w:{o:[1,0]}}");
 			}
 			else if(this.state>1)
 			{

@@ -58,7 +58,7 @@ namespace communications
 
       while(node!=NULL)
       {
-        std::string path("u."+peripherals.key()+"["+std::to_string(count)+"]");
+        std::string path("w."+peripherals.key()+"["+std::to_string(count)+"]");
 
         if(json[path].size()>0)
           peripherals.on_set(node->data,json,path);
@@ -90,7 +90,7 @@ namespace communications
       send_packet("{\"c\":{}}",Serial);
     }
 
-    if(json["u"].size()>0)
+    if(json["w"].size()>0)
     {
       std::string sensor_json;
       sensor_json+="{";
