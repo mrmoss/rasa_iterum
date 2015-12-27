@@ -6,6 +6,7 @@ function gui_t(div)
 	this.div=div;
 	this.el=document.createElement("div");
 	this.div.appendChild(this.el);
+	this.superstar_errored=false;
 
 	var _this=this;
 
@@ -21,6 +22,7 @@ function gui_t(div)
 
 	this.download_config();
 	setInterval(function(){_this.download_config();},2000);
+	this.download_write();
 }
 
 gui_t.prototype.destroy=function()
@@ -32,42 +34,55 @@ gui_t.prototype.destroy=function()
 gui_t.prototype.download_config=function()
 {
 	var superstar="127.0.0.1:8081";
-	var path="test";
-
-	this.status_viewer.show("Downloading config \""+path+"\" from "+superstar+".");
-
+	var path="test2/config";
 	var _this=this;
 
 	ss_get(superstar,path,
 		function(json)
 		{
-			var was_empty=false;
-
-			if(!json.c)
+			if(_this.superstar_errored||JSON.stringify(json)!=JSON.stringify(_this.connection.config))
 			{
-				was_empty=true;
-				json.c={};
-				ss_set(superstar,path,json,function(){},function(error)
-				{
-					_this.status_viewer.show(error);
-				});
+				_this.status_viewer.show("Got configuration \""+JSON.stringify(json)+"\".");
+				_this.connection.reconfigure(json);
 			}
 
-			if(JSON.stringify(json)!=_this.connection.config)
-			{
-				if(was_empty)
-					_this.status_viewer.show("Empty config, generating default.");
-				else
-					_this.status_viewer.show("Got configuration \""+JSON.stringify(json)+"\".");
-
-				if(_this.connection.state==4)
-						_this.connection.reconfigure(json);
-				else
-					_this.connection.set_config(json);
-			}
+			_this.superstar_errored=false;
 		},
 		function(error)
 		{
 			_this.status_viewer.show(error);
+			_this.connection.disconnect();
+			_this.superstar_errored=true;
 		});
+}
+
+gui_t.prototype.download_write=function()
+{
+	var _this=this;
+
+	if(this.connection.state!=0)
+	{
+		var superstar="127.0.0.1:8081";
+		var path="test2/write";
+
+		ss_get(superstar,path,
+			function(json)
+			{
+				if(_this.connection.set_write(json))
+					_this.status_viewer.show("Got write \""+JSON.stringify(json)+"\".");
+
+				setTimeout(function(){_this.download_write();},10);
+			},
+			function(error)
+			{
+				_this.status_viewer.show(error);
+				_this.connection.disconnect();
+				setTimeout(function(){_this.download_write();},10);
+				_this.superstar_errored=true;
+			});
+	}
+	else
+	{
+		setTimeout(function(){_this.download_write();},10);
+	}
 }

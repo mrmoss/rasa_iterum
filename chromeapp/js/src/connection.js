@@ -9,6 +9,8 @@ function connection_t(div,on_message)
 	this.div=div;
 	this.el=document.createElement("div");
 	this.div.appendChild(this.el);
+	this.old_time=new Date();
+	this.min_send_delay_ms=40;
 
 	this.on_message=on_message;
 
@@ -17,10 +19,11 @@ function connection_t(div,on_message)
 	this.serial=null;
 	this.serial_name=null;
 	this.serial_proc=null;
-	this.config="{c:{}}";
+	this.config={};
 	this.parser=new parser_t(function(str){_this.on_packet_m(str);});
 	this.state=0;
 	this.timeout=null;
+	this.nonce=-1;
 
 	chrome.serial.onReceive.addListener(function(info){_this.on_receive_m(info);});
 	chrome.serial.onReceiveError.addListener(function(info){_this.on_receive_error_m(info);});
@@ -65,11 +68,10 @@ connection_t.prototype.disconnect=function()
 
 connection_t.prototype.reconfigure=function(config)
 {
+	this.set_config(config);
+
 	if(this.state==4)
 	{
-		if(config)
-			this.set_config(config);
-
 		if(this.config)
 		{
 			this.disconnect_m();
@@ -84,7 +86,7 @@ connection_t.prototype.set_config=function(config)
 	{
 		try
 		{
-			this.config=JSON.stringify(config);
+			this.config=config;
 		}
 		catch(error)
 		{
@@ -95,6 +97,11 @@ connection_t.prototype.set_config=function(config)
 	}
 }
 
+connection_t.prototype.set_write=function(write)
+{
+	return (this.state==4&&this.send_m({w:write}));
+}
+
 
 
 
@@ -102,7 +109,7 @@ connection_t.prototype.check_firmware_m=function()
 {
 	if(this.serial&&this.state==2)
 	{
-		this.send_m("{s:{}}",true);
+		this.send_m({s:{}},true);
 
 		if(this.on_message)
 			this.on_message("Checking firmware on \""+this.serial_name+"\".");
@@ -127,7 +134,7 @@ connection_t.prototype.configure_m=function(config)
 		this.on_message("Configuring \""+this.serial_name+"\".");
 
 	if(this.serial)
-		this.send_m(config,true);
+		this.send_m({c:config},true);
 }
 
 connection_t.prototype.disconnect_m=function()
@@ -221,15 +228,11 @@ connection_t.prototype.on_packet_m=function(str)
 				if(this.on_message)
 					this.on_message("Connected to \""+this.serial_name+
 						"\" ("+this.serial_proc+").");
-
-				this.send_m("{w:{o:[1,0]}}");
 			}
 			else if(this.state==4)
 			{
 				if(this.on_message)
 					this.on_message(str);
-
-				this.send_m("{w:{o:[1,0]}}");
 			}
 			else if(this.state>1)
 			{
@@ -287,13 +290,23 @@ connection_t.prototype.reset_timeout_m=function()
 	}
 }
 
-connection_t.prototype.send_m=function(str,disconnect)
+connection_t.prototype.send_m=function(json,disconnect)
 {
-	var _this=this;
+	var new_time=new Date();
 
-	chrome.serial.send(this.serial.connectionId,build_packet(str),function(send_info)
+	if(this.state!=0&&(this.state!=4||(new_time-this.old_time)>=this.min_send_delay_ms))
 	{
-		if(chrome.runtime.lastError&&disconnect)
-			_this.raise_error_m(chrome.runtime.lastError.message);
-	});
+		var _this=this;
+
+		chrome.serial.send(this.serial.connectionId,build_packet(JSON.stringify(json)),function(send_info)
+		{
+			if(chrome.runtime.lastError&&disconnect)
+				_this.raise_error_m(chrome.runtime.lastError.message);
+		});
+
+		this.old_time=new Date();
+		return true;
+	}
+
+	return false;
 }

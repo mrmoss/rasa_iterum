@@ -7,6 +7,9 @@ function status_viewer_t(div)
 	this.el=document.createElement("div");
 	this.div.appendChild(this.el);
 
+	this.max_lines=200;
+	this.lines=[];
+
 	this.textarea=document.createElement("textarea");
 	this.el.appendChild(this.textarea);
 	this.textarea.wrap="off";
@@ -14,8 +17,6 @@ function status_viewer_t(div)
 	this.textarea.style.resize="none";
 	this.textarea.style.width="370px";
 	this.textarea.style.height="350px";
-
-	this.last_message="";
 }
 
 status_viewer_t.prototype.destroy=function()
@@ -25,10 +26,24 @@ status_viewer_t.prototype.destroy=function()
 
 status_viewer_t.prototype.show=function(message)
 {
-	if(message!=this.last_message)
+	if(this.lines.length<=0||message!=this.lines[this.lines.length-1])
 	{
-		this.last_message=message;
-		this.textarea.innerHTML+=message+"\n";
+		this.lines.push(message);
+
+		while(this.lines.length>this.max_lines)
+			this.lines=this.lines.slice(-this.max_lines,this.lines.length);
+
+		this.rebuld_textarea_m();
 		this.textarea.scrollTop=this.textarea.scrollHeight;
 	}
+}
+
+
+
+status_viewer_t.prototype.rebuld_textarea_m=function()
+{
+	this.textarea.innerHTML="";
+
+	for(var ii=0;ii<this.lines.length;++ii)
+		this.textarea.innerHTML+=this.lines[ii]+"\n";
 }
