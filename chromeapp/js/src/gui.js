@@ -13,7 +13,7 @@ function gui_t(div)
 	this.connection=new connection_t(this.el,
 		function(message){_this.status_viewer.show(message);},
 		function(){_this.serial_selector.disconnect();},
-		function(json){_this.status_viewer.show("Got read: "+JSON.stringify(json));});
+		function(json){_this.status_viewer.show("Got read: "+JSON.stringify(json));_this.upload_read(json);});
 
 	this.serial_selector=new serial_selector_t(this.el,
 		function(port){_this.connection.connect(port);},
@@ -86,4 +86,21 @@ gui_t.prototype.download_write=function()
 	{
 		setTimeout(function(){_this.download_write();},10);
 	}
+}
+
+gui_t.prototype.upload_read=function(json)
+{
+	var _this=this;
+	var superstar="127.0.0.1:8081";
+	var path="test2/read";
+
+	ss_set(superstar,path,json,
+		function(json)
+		{},
+		function(error)
+		{
+			_this.status_viewer.show(error);
+			_this.connection.disconnect();
+			_this.superstar_errored=true;
+		});
 }
