@@ -97,7 +97,7 @@ class roomba_t
     void set_mode(const mode_t& mode);
 
     //void drive(const int16_t left,const int16_t right);
-    void drive(const int16_t velocity, const int16_t radius);
+    void drive(const int16_t, const int16_t,const bool reset_timer=true);
 
     void set_led_check(const bool on);
     void set_led_dock(const bool on);
@@ -128,6 +128,7 @@ class roomba_t
     parser_state_t serial_state_m;
     sensor_t sensor_packet_m;
     uint32_t timeout_m;
+    uint32_t kill_timeout_m;
     
     encoder_t last_encoder_m; // real encoder value
     encoder_t last_raw_m; // raw encoder value

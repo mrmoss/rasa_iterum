@@ -5,6 +5,9 @@
 */
 #include "roomba.h"
 
+#define STOP_MOTOR_TIME 500
+#define KILL_TIME       10000
+
 #define ROOMBA_ID_START                     128
 #define ROOMBA_ID_STOP                      173
 #define ROOMBA_ID_RESET                     7
@@ -74,7 +77,7 @@ static bool checksum(const uint8_t header,const uint8_t size,const void* data,co
 
 roomba_t::roomba_t():wake_pin(0),serial_m(NULL),leds_m(0),
   led_clean_color_m(0),led_clean_brightness_m(0),serial_size_m(0),serial_buffer_m(NULL),
-  serial_pointer_m(0),serial_state_m(HEADER),timeout_m(0)
+  serial_pointer_m(0),serial_state_m(HEADER),timeout_m(0),kill_timeout_m(0)
 {
   memset(&sensor_packet_m,0,sizeof(sensor_packet_m));
   last_encoder_m.L=0; last_encoder_m.R=0; 
@@ -89,6 +92,9 @@ void roomba_t::set_serial(roomba_serial_t& serial)
 
 void roomba_t::setup(int BRC_pin) 
 {
+  pinMode(13,OUTPUT);
+  digitalWrite(13,LOW);
+
   wake_pin=BRC_pin;
   // Bring baud rate control (BRC) pin low
   //  This wakes up the Open Interface so it listens for serial
@@ -107,6 +113,7 @@ void roomba_t::setup(int BRC_pin)
     led_update();
     set_receive_sensors(true);
     for (int wait=0;wait<20;wait++) {
+      kill_timeout_m=millis()+KILL_TIME;
       update();
       if (sensor_packet_m.mode!=0) { // success!
         digitalWrite(BRC_pin,HIGH);
@@ -146,7 +153,15 @@ void roomba_t::reset()
 void roomba_t::update()
 {
   if((uint32_t)millis()>timeout_m)
-    drive(0,0);
+    drive(0,0,false);
+
+  if((uint32_t)millis()>kill_timeout_m)
+  {
+    pinMode(13,OUTPUT);
+    digitalWrite(13,HIGH);
+    set_mode(PASSIVE);
+    stop();
+  }
 
   uint8_t data;
 
@@ -206,9 +221,14 @@ void roomba_t::set_mode(const mode_t& mode)
 
 #if 1
 /* Normal left-right driving mode */
-void roomba_t::drive(const int16_t left,const int16_t right)
+void roomba_t::drive(const int16_t left,const int16_t right,bool reset_timer)
 {
-  timeout_m=(uint32_t)millis()+500;
+  if(reset_timer)
+  {
+    timeout_m=(uint32_t)millis()+STOP_MOTOR_TIME;
+    kill_timeout_m=(uint32_t)millis()+KILL_TIME;
+  }
+
   uint8_t id=ROOMBA_ID_DRIVE_DIRECT;
   serial_m->write(&id,1);
   serial_m->write((uint8_t*)&right+1,1);
@@ -226,9 +246,14 @@ void roomba_t::drive(const int16_t left,const int16_t right)
 #else
 // Velocity and radius drive mode (Ryker hacky testing)
 //Command Sequence: [137][V High][V Low][R High][R Low]
-void roomba_t::drive(const int16_t velocity, const int16_t radius)
+void roomba_t::drive(const int16_t velocity, const int16_t radius,const bool reset_timer)
 {
-  timeout=(uint32_t)millis()+500;
+  if(reset_timer)
+  {
+    timeout_m=(uint32_t)millis()+STOP_MOTOR_TIME;
+    kill_timeout_m=(uint32_t)millis()+KILL_TIME;
+  }
+
   int16_t testv = 50;
   int16_t testr = 32768; //drive straight
   uint8_t id=ROOMBA_ID_DRIVE_VELRAD;
