@@ -9,6 +9,7 @@
 #include "output_pin.h"
 #include "packetize.h"
 #include "servo.h"
+#include "roomba_list.h"
 
 #include "MemoryFree.h"
 
@@ -18,6 +19,7 @@ namespace communications
   output_pin_list_t outputs;
   servo_list_t servos;
   bts_list_t btss;
+  roomba_list_t roombas;
 
   template<typename T> void configure(peripheral_list_t<T>& peripherals,json_ro_t& json)
   {
@@ -86,6 +88,7 @@ namespace communications
       configure(outputs,json);
       configure(servos,json);
       configure(btss,json);
+      configure(roombas,json);
 
       send_packet("{\"c\":{}}",Serial);
     }
@@ -104,7 +107,10 @@ namespace communications
       if(update(servos,json,sensor_json))
         sensor_json+=",";
 
-      update(btss,json,sensor_json);
+      if(update(btss,json,sensor_json))
+        sensor_json+=",";
+
+      update(roombas,json,sensor_json);
 
       if(sensor_json.size()>0&&sensor_json[sensor_json.size()-1]==',')
         sensor_json.erase(sensor_json.size()-1,1);
@@ -143,6 +149,7 @@ namespace communications
     //loop(outputs);
     //loop(servos);
     loop(btss);
+    loop(roombas);
   }
 }
 

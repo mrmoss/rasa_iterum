@@ -11,7 +11,7 @@ function connection_t(div,on_message,on_disconnect,on_read)
 	this.el=document.createElement("div");
 	this.div.appendChild(this.el);
 	this.old_time=new Date();
-	this.min_send_delay_ms=40;
+	this.min_send_delay_ms=50;
 
 	this.on_message=on_message;
 	this.on_disconnect=on_disconnect;

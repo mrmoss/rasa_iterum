@@ -72,19 +72,19 @@ gui_t.prototype.download_write=function()
 				if(_this.connection.set_write(json))
 					_this.status_viewer.show("Got write \""+JSON.stringify(json)+"\".");
 
-				setTimeout(function(){_this.download_write();},1);
+				setTimeout(function(){_this.download_write();},100);
 			},
 			function(error)
 			{
 				_this.status_viewer.show(error);
 				_this.connection.disconnect();
-				setTimeout(function(){_this.download_write();},1);
+				setTimeout(function(){_this.download_write();},100);
 				_this.superstar_errored=true;
 			});
 	}
 	else
 	{
-		setTimeout(function(){_this.download_write();},1);
+		setTimeout(function(){_this.download_write();},100);
 	}
 }
 

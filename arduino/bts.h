@@ -38,9 +38,6 @@ class bts_list_t:public peripheral_list_t<bts_t>
       bts.left_pin=std::stoul(left_pin);
       bts.right_pin=std::stoul(right_pin);
 
-      Serial.println(bts.left_pin);
-      Serial.println(bts.right_pin);
-
       if(bts.left_pin>1&&bts.right_pin>1)
       {
         pinMode(bts.left_pin,OUTPUT);
